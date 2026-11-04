@@ -1,8 +1,10 @@
 // Página de Ajuda: explicação curta de cada comando e a camada OSI/TCP-IP.
 import { HELP } from '../sim/help';
+import { Footer } from './Footer';
 
 export function HelpPage() {
   return (
+    <>
     <div className="help-page">
       <h1>Ajuda — comandos de rede</h1>
       <p style={{ color: 'var(--muted)' }}>
@@ -17,5 +19,7 @@ export function HelpPage() {
         </div>
       ))}
     </div>
+    <Footer />
+    </>
   );
 }

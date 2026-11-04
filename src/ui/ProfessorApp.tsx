@@ -13,6 +13,7 @@ import {
 import { PROF_PIN } from '../firebase/app';
 import { gatewayList } from '../sim/net';
 import type { Faults, NetMode, SimEvent } from '../sim/types';
+import { Footer } from './Footer';
 import { QrCode } from './QrCode';
 import { faultsOf, useSessionState } from './useSessionState';
 
@@ -244,6 +245,10 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <Footer />
       </div>
     </div>
   );

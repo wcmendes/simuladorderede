@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { getSession, joinSession, sessionIdFromCode } from '../firebase/data';
 import type { Host } from '../sim/types';
+import { Footer } from './Footer';
 
 interface Props {
   uid: string;
@@ -42,7 +43,8 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
   }
 
   return (
-    <div className="center-screen">
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="center-screen" style={{ flex: 1 }}>
       <form className="card" onSubmit={submit}>
         <h1>LabRedes</h1>
         <p className="sub">Entre na rede simulada da turma</p>
@@ -66,6 +68,8 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
           Não pedimos matrícula, e-mail nem senha. A presença é controlada na folha em papel.
         </p>
       </form>
+      </div>
+      <Footer />
     </div>
   );
 }

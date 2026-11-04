@@ -199,6 +199,25 @@ table.students th { color: var(--muted); }
 .help-page .cmd code { color: var(--accent); font-weight: 700; }
 .help-page .cmd .layer { float: right; color: var(--muted); font-size: 12px; }
 
+/* Rodapé */
+.app-footer {
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.app-footer b { color: var(--text); }
+.app-footer a { color: var(--accent); text-decoration: none; }
+.app-footer a:hover { text-decoration: underline; }
+.app-footer .sep { color: var(--border); }
+.app-footer .muted { color: var(--muted); }
+
 .tour-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; }
 .tour-box { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; max-width: 380px; text-align: center; }
 .tour-box h3 { margin: 0 0 10px; }

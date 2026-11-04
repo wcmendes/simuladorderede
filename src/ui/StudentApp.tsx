@@ -12,6 +12,7 @@ import {
 import { runCommand } from '../sim/engine';
 import { SHORTCUT_COMMANDS } from '../sim/help';
 import type { Action, Host, SimContext } from '../sim/types';
+import { Footer } from './Footer';
 import { Pratica1 } from './Pratica1';
 import { SitesTab } from './SitesTab';
 import { Terminal, TerminalHandle, TermLine, expandLines } from './Terminal';
@@ -306,6 +307,8 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
           </div>
         </div>
       </div>
+
+      <Footer />
 
       <div className="toasts">
         {toasts.map((t) => (
