@@ -29,6 +29,15 @@ import {
 } from '../sim/net';
 import { NO_FAULTS } from '../sim/types';
 import type { Faults, Host, NetMode, Site, SimEvent, SimEventDraft } from '../sim/types';
+import type { Nivel, Tipo } from '../sim/mascara';
+import { normalizarScore, type Score } from '../sim/ranking';
+
+/** Rodada do Desafio: restringe o tipo e a dificuldade das perguntas de toda a turma. */
+export interface RodadaDoc {
+  ativa: boolean;
+  tipo: Tipo | 'todos';
+  nivel: Nivel;
+}
 
 export interface SessionDoc {
   code: string;
@@ -36,6 +45,8 @@ export interface SessionDoc {
   ownerUid: string;
   mode: NetMode;
   faults: Faults;
+  rodada?: RodadaDoc;
+  rankingEpoch?: number; // muda quando o professor zera o ranking
 }
 
 const sessionsCol = collection(db, 'sessions');
@@ -45,6 +56,7 @@ const presenceCol = (sid: string) => collection(db, 'sessions', sid, 'presence')
 const sitesCol = (sid: string) => collection(db, 'sessions', sid, 'sites');
 const eventsCol = (sid: string) => collection(db, 'sessions', sid, 'events');
 const answersCol = (sid: string) => collection(db, 'sessions', sid, 'answers');
+const scoresCol = (sid: string) => collection(db, 'sessions', sid, 'scores');
 
 /** sessionId = code em minúsculas, para o link ser estável. */
 export function sessionIdFromCode(code: string): string {
@@ -229,6 +241,57 @@ export function watchAllAnswers(sid: string, cb: (map: Record<string, AnswersDoc
   });
 }
 
+// --- Ranking do Desafio da máscara ---
+
+export interface ScoreDoc extends Score {
+  uid: string;
+  name: string;
+  updatedAt: number;
+}
+
+/** Uma gravação por resposta do aluno (nunca em loop). */
+export async function saveScore(sid: string, uid: string, name: string, score: Score): Promise<void> {
+  await setDoc(doc(scoresCol(sid), uid), {
+    name: name.slice(0, 80),
+    ok: score.ok,
+    total: score.total,
+    streak: score.streak,
+    byKind: score.byKind,
+    updatedAt: Date.now(),
+  });
+}
+
+export function watchScores(sid: string, cb: (scores: ScoreDoc[]) => void): Unsubscribe {
+  return onSnapshot(scoresCol(sid), (snap) => {
+    cb(
+      snap.docs.map((d) => {
+        const data = d.data() as Partial<ScoreDoc>;
+        return { ...normalizarScore(data), uid: d.id, name: data.name ?? 'Aluno', updatedAt: data.updatedAt ?? 0 };
+      }),
+    );
+  });
+}
+
+export async function setRodada(sid: string, rodada: RodadaDoc): Promise<void> {
+  await updateDoc(sessionRef(sid), { rodada });
+}
+
+/** Zera o ranking: muda a época (os alunos reiniciam o placar local) e apaga os placares. */
+export async function zerarRanking(sid: string): Promise<void> {
+  await updateDoc(sessionRef(sid), { rankingEpoch: Date.now() });
+  await apagarColecao(scoresCol(sid));
+}
+
+async function apagarColecao(col: ReturnType<typeof collection>): Promise<void> {
+  const snap = await getDocs(col);
+  // Firestore limita o batch a 500 operações.
+  for (let i = 0; i < snap.docs.length; i += 450) {
+    const batch = writeBatch(db);
+    snap.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+}
+
 // --- Moderação / encerramento ---
 
 export async function removeHost(sid: string, uid: string): Promise<void> {
@@ -238,15 +301,11 @@ export async function removeHost(sid: string, uid: string): Promise<void> {
 
 /** Apaga todas as subcoleções da sessão (botão "Encerrar sessão"). */
 export async function endSession(sid: string): Promise<void> {
-  for (const col of [hostsCol(sid), presenceCol(sid), sitesCol(sid), eventsCol(sid), answersCol(sid)]) {
-    const snap = await getDocs(col);
-    // Firestore limita o batch a 500 operações.
-    for (let i = 0; i < snap.docs.length; i += 450) {
-      const batch = writeBatch(db);
-      snap.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
-      await batch.commit();
-    }
-  }
+  const colecoes = [
+    hostsCol(sid), presenceCol(sid), sitesCol(sid), eventsCol(sid), answersCol(sid), scoresCol(sid),
+    collection(db, 'sessions', sid, 'quizAnswers'), collection(db, 'sessions', sid, 'quiz'),
+  ];
+  for (const col of colecoes) await apagarColecao(col);
   await deleteDoc(doc(db, 'sessions', sid, 'meta', 'ipPool')).catch(() => {});
   await deleteDoc(sessionRef(sid)).catch(() => {});
 }

@@ -5,6 +5,7 @@ import {
   createSite,
   removeSite,
   saveAnswers,
+  saveScore,
   updateSite,
   watchAnswers,
   watchMyEvents,
@@ -98,6 +99,18 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
     return unsub;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sid, me.ip, state.onlineHosts]);
+
+  // Rodada do professor: avisa e leva o aluno ao Desafio.
+  const rodadaAtiva = !!state.session?.rodada?.ativa;
+  const rodadaAnterior = useRef(false);
+  useEffect(() => {
+    if (rodadaAtiva && !rodadaAnterior.current) {
+      toast('🎯 O professor abriu uma rodada do Desafio de máscara!');
+      setTab('mascara');
+    }
+    rodadaAnterior.current = rodadaAtiva;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rodadaAtiva]);
 
   function toast(text: string) {
     const id = idRef.current++;
@@ -306,7 +319,18 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
               </>
             )}
             {tab === 'vm' && <VmTab me={me} onChecklist={setChecklistItem} />}
-            {tab === 'mascara' && <Mascara />}
+            {tab === 'mascara' && (
+              <Mascara
+                sessao={{
+                  sid,
+                  uid: me.uid,
+                  name: me.name,
+                  epoch: state.session?.rankingEpoch,
+                  rodada: state.session?.rodada,
+                  salvarScore: (score) => saveScore(sid, me.uid, me.name, score),
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

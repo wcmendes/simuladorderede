@@ -14,6 +14,7 @@ import { PROF_PIN } from '../firebase/app';
 import { gatewayList } from '../sim/net';
 import type { Faults, NetMode, SimEvent } from '../sim/types';
 import { Footer } from './Footer';
+import { RankingTab } from './prof/RankingTab';
 import { QrCode } from './QrCode';
 import { faultsOf, useSessionState } from './useSessionState';
 
@@ -98,6 +99,7 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
   const [feed, setFeed] = useState<SimEvent[]>([]);
   const [answers, setAnswers] = useState<Record<string, AnswersDoc>>({});
   const [showQr, setShowQr] = useState(true);
+  const [aba, setAba] = useState<'painel' | 'ranking'>('painel');
 
   useEffect(() => {
     const u1 = watchFeed(sid, setFeed);
@@ -158,6 +160,14 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
         </button>
       </div>
 
+      <div className="prof-tabs">
+        <button className={aba === 'painel' ? 'active' : ''} onClick={() => setAba('painel')}>Painel</button>
+        <button className={aba === 'ranking' ? 'active' : ''} onClick={() => setAba('ranking')}>Ranking</button>
+      </div>
+
+      {aba === 'ranking' && <RankingTab sid={sid} rodada={state.session?.rodada} />}
+
+      {aba === 'painel' && (
       <div className="prof-grid">
         <div className="prof-section">
           <h2>Alunos online ({state.onlineHosts.length})</h2>
@@ -246,6 +256,7 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
           </table>
         </div>
       </div>
+      )}
 
       <div style={{ marginTop: 20 }}>
         <Footer />

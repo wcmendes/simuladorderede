@@ -57,6 +57,48 @@ service cloud.firestore {
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(sid));
       }
 
+      // Placar do Desafio da máscara: cada aluno escreve só o próprio documento.
+      // ok nunca maior que total; só o professor (ownerUid) zera o ranking.
+      match /scores/{uid} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.name is string && request.resource.data.name.size() <= 80
+          && request.resource.data.ok is int && request.resource.data.total is int
+          && request.resource.data.streak is int
+          && request.resource.data.ok >= 0
+          && request.resource.data.ok <= request.resource.data.total
+          && request.resource.data.streak >= 0
+          && request.resource.data.streak <= request.resource.data.ok;
+        allow delete: if isOwner(sid);
+      }
+
+      // Quiz ao vivo. quiz/state: só o professor escreve; todos leem (cada aluno escuta só este documento).
+      match /quiz/{doc} {
+        allow read: if signedIn();
+        allow write: if isOwner(sid);
+      }
+
+      // Respostas do quiz, id = "<índice da pergunta>_<uid>". Só criação (ninguém responde duas
+      // vezes), só antes da revelação e só para a pergunta em andamento.
+      // O aluno lê apenas a própria resposta; o professor lê todas.
+      match /quizAnswers/{id} {
+        allow get: if signedIn() && (isOwner(sid) || id.matches('^[0-9]+_' + request.auth.uid + '$'));
+        allow list: if isOwner(sid);
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['uid', 'q', 'choice', 'ms'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q is int
+          && id == string(request.resource.data.q) + '_' + request.auth.uid
+          && request.resource.data.choice is int
+          && request.resource.data.choice >= 0 && request.resource.data.choice <= 5
+          && request.resource.data.ms is int
+          && request.resource.data.ms >= 0 && request.resource.data.ms <= 120000
+          && get(/databases/$(database)/documents/sessions/$(sid)/quiz/state).data.revealed == false
+          && get(/databases/$(database)/documents/sessions/$(sid)/quiz/state).data.questionIndex == request.resource.data.q;
+        allow update: if false;
+        allow delete: if isOwner(sid);
+      }
+
       // Contador de IPs (alocação por transação).
       match /meta/{doc} {
         allow read, write: if signedIn();
