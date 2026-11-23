@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CODIGO_PADRAO, getSession, joinSession, proximoPc, sessionIdFromCode } from '../firebase/data';
 import type { Host } from '../sim/types';
 import { Footer } from './Footer';
+import { MarcaImg } from './Marca';
 
 interface Props {
   uid: string;
@@ -74,6 +75,7 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
       </form>
       </div>
       <Footer />
+      <MarcaImg />
     </div>
   );
 }
