@@ -64,6 +64,9 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
         <button className="btn" type="submit" disabled={loading} style={{ width: '100%', marginTop: 8 }}>
           {loading ? 'Entrando...' : 'Entrar na rede'}
         </button>
+        <p style={{ fontSize: 14, marginTop: 14, textAlign: 'center' }}>
+          <a href="/mascara">Estudar máscara de rede sem entrar numa sessão →</a>
+        </p>
         <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 14 }}>
           Não pedimos matrícula, e-mail nem senha. A presença é controlada na folha em papel.
         </p>

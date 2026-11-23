@@ -8,19 +8,31 @@ import { JoinScreen } from './ui/JoinScreen';
 import { ProfessorApp } from './ui/ProfessorApp';
 import { StudentApp } from './ui/StudentApp';
 import { HelpPage } from './ui/HelpPage';
+import { Footer } from './ui/Footer';
+import { Mascara } from './ui/mascara/Mascara';
 
-function useHashRoute(): string {
-  const [hash, setHash] = useState(() => location.hash);
+/** Rota atual: aceita "#/professor" (hash) e "/professor" (caminho). */
+function currentRoute(): string {
+  const h = location.hash.replace(/^#/, '');
+  return h.startsWith('/') ? h : location.pathname;
+}
+
+function useRoute(): string {
+  const [route, setRoute] = useState(currentRoute);
   useEffect(() => {
-    const on = () => setHash(location.hash);
+    const on = () => setRoute(currentRoute());
     window.addEventListener('hashchange', on);
-    return () => window.removeEventListener('hashchange', on);
+    window.addEventListener('popstate', on);
+    return () => {
+      window.removeEventListener('hashchange', on);
+      window.removeEventListener('popstate', on);
+    };
   }, []);
-  return hash;
+  return route;
 }
 
 function App() {
-  const hash = useHashRoute();
+  const route = useRoute();
   const [uid, setUid] = useState<string | null>(null);
   const [authError, setAuthError] = useState('');
   const [joined, setJoined] = useState<{ sid: string; host: Host } | null>(() => {
@@ -51,6 +63,16 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Ferramenta de estudo: não precisa de login nem de sessão.
+  if (route.startsWith('/mascara')) {
+    return (
+      <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1 }}><Mascara /></div>
+        <Footer />
+      </div>
+    );
+  }
+
   if (authError) {
     return (
       <div className="center-screen">
@@ -65,8 +87,6 @@ function App() {
   if (!uid) {
     return <div className="center-screen"><div className="card"><h1>LabRedes</h1><p className="sub">Conectando...</p></div></div>;
   }
-
-  const route = hash.replace(/^#/, '');
 
   if (route.startsWith('/ajuda')) return <HelpPage />;
   if (route.startsWith('/professor')) return <ProfessorApp uid={uid} />;

@@ -199,6 +199,10 @@ table.students th { color: var(--muted); }
 .help-page .cmd code { color: var(--accent); font-weight: 700; }
 .help-page .cmd .layer { float: right; color: var(--muted); font-size: 12px; }
 
+/* Aba Máscara: dá mais espaço ao painel lateral e remove o recuo */
+.student-body.wide-side .term-pane { flex-basis: 36%; }
+.tab-content.flush { padding: 0; }
+
 /* Rodapé */
 .app-footer {
   border-top: 1px solid var(--border);

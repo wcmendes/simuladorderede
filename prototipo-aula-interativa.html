@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula interativa de Redes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday learning tool for a networks class, projected in a Meet call and opened by students
+   IDEA a ruler of 32 bits: the slash slides along it and paints network blue, host orange, like the class slides
+   PICTURE the 32-bit strip of the IP over the mask strip, with the octet the slash cuts drawn as a 0-255 ruler of blocks
+   COLOUR white ground, ink black, network blue #2459C4, host orange #C65A12, signal red #e4002b for the answer
+   TYPE Archivo wide 800 for titles and figures + Archivo; JetBrains Mono only for bits and addresses
+   LAYOUT tabs across the top; strip full width; result figures in a ruled column beside the worked steps; phone stacks */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e0e0e);--ink:light-dark(#111,#f2f2f2);--mute:light-dark(#5b6270,#a3a9b5);--rule:light-dark(#d9dce2,#2c2f35);--panel:light-dark(#f4f5f7,#17191d);--net:#2459C4;--host:#C65A12;--red:#e4002b;--netl:light-dark(#e3eafa,#1b2742);--hostl:light-dark(#fbe7da,#3a2416);--ok:light-dark(#137a3f,#4cc983)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Archivo,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:1240px;margin:0 auto;padding:clamp(18px,3vw,40px) max(4vw,16px) 48px}
+h1{font-stretch:112%;font-weight:800;font-size:clamp(30px,4.4vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--mute);margin:0 0 18px;max-width:68ch}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+nav{display:flex;flex-wrap:wrap;gap:6px;border-bottom:3px solid var(--ink);margin-bottom:22px}
+nav a{padding:10px 16px;border-radius:8px 8px 0 0;color:var(--ink);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center}
+nav a[aria-current=page]{background:var(--ink);color:var(--bg)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+section[hidden]{display:none}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end;margin-bottom:18px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
+input[type=text],input[type=number],select{font:500 18px "JetBrains Mono",monospace;padding:10px 12px;border:2px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);width:17.5ch;min-height:46px}
+input.bad{border-color:var(--red)}
+.slash{display:flex;align-items:center;gap:14px;flex:1 1 320px}
+.slash output{font:800 clamp(40px,6vw,64px)/1 Archivo,system-ui,sans-serif;font-stretch:112%;min-width:2.6ch}
+input[type=range]{flex:1;accent-color:var(--net);height:44px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 15px Archivo,sans-serif;border:2px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:999px;padding:9px 16px;min-height:44px;cursor:pointer}
+button:hover{background:var(--panel)}
+button.solid{background:var(--ink);color:var(--bg)}
+.strip{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:10px 14px;align-items:center;padding:18px;border:2px solid var(--ink);border-radius:14px;margin-bottom:14px}
+.rowlab{font-weight:700;font-size:15px}
+.oct{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.dec{font:700 clamp(18px,2.4vw,26px) "JetBrains Mono",monospace;text-align:center}
+.bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}
+.bit{font:700 clamp(12px,1.6vw,18px) "JetBrains Mono",monospace;text-align:center;padding:7px 0;border-radius:4px;color:#fff;transition:background .25s}
+.bit.n{background:var(--net)}.bit.h{background:var(--host)}
+.bit.m1{background:var(--netl);color:var(--net)}.bit.m0{background:var(--hostl);color:var(--host)}
+.cut{outline:3px solid var(--red);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--mute);margin:0 0 20px}
+.legend b{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px}
+.figs{border-top:3px solid var(--ink)}
+.figs div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.figs span{color:var(--mute)}
+.figs strong{font:700 19px "JetBrains Mono",monospace;white-space:nowrap}
+.figs .big strong{font:800 clamp(26px,3.4vw,36px) Archivo,system-ui,sans-serif;font-stretch:112%;color:var(--red)}
+.steps{background:var(--panel);border-radius:14px;padding:18px 20px}
+.steps h2,.card h2{font-size:20px;margin:0 0 10px;font-stretch:110%}
+.steps ol{margin:0;padding-left:22px}
+.steps li{margin:8px 0}
+.ruler{margin-top:14px}
+.rbar{display:flex;height:46px;border-radius:8px;overflow:hidden;border:2px solid var(--ink)}
+.rbar div{flex:1;display:flex;align-items:center;justify-content:center;font:600 12px "JetBrains Mono",monospace;border-right:1px solid var(--bg);background:var(--hostl);color:var(--host);overflow:hidden;white-space:nowrap}
+.rbar div.on{background:var(--red);color:#fff;font-weight:700}
+.rscale{display:flex;justify-content:space-between;font:500 13px "JetBrains Mono",monospace;color:var(--mute);margin-top:4px}
+.card{border:2px solid var(--rule);border-radius:14px;padding:18px 20px}
+.verdict{font:800 clamp(26px,3.6vw,40px)/1.1 Archivo,system-ui,sans-serif;font-stretch:112%;margin:6px 0 10px}
+.verdict.yes{color:var(--ok)}.verdict.no{color:var(--red)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;border-bottom:3px solid var(--ink);padding:8px}
+td{border-bottom:1px solid var(--rule);padding:8px;white-space:nowrap}
+td.m{font-family:"JetBrains Mono",monospace}
+.q{font:700 clamp(22px,3vw,30px)/1.25 Archivo,system-ui,sans-serif;margin:4px 0 14px}
+.fb{margin-top:14px;padding:14px 16px;border-radius:10px;display:none}
+.fb.show{display:block}
+.fb.ok{background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.fb.err{background:color-mix(in srgb,var(--red) 12%,transparent)}
+.score{font:800 22px Archivo,system-ui,sans-serif;font-stretch:112%}
+.note{font-size:14px;color:var(--mute)}
+
+.lane{border:2px solid var(--rule);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.lane h3{margin:0 0 8px;font-size:20px;font-stretch:110%}
+.track{position:relative;height:56px;background:var(--panel);border-radius:10px;overflow:hidden}
+.track .end{position:absolute;top:0;bottom:0;width:62px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--mute)}
+.track .end.a{left:0}.track .end.b{right:0}
+.pk{position:absolute;top:12px;left:62px;height:32px;min-width:38px;padding:0 6px;border-radius:7px;display:flex;align-items:center;justify-content:center;font:700 13px "JetBrains Mono",monospace;color:#fff;background:var(--net);transition:left .5s linear,opacity .3s}
+.pk.udp{background:var(--host)}.pk.ctl{background:var(--ink);color:var(--bg)}.pk.back{background:#6b7280}
+.pk.lost{background:var(--red);opacity:.0}
+.slots{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;margin-top:10px}
+.slots span{height:30px;border-radius:5px;border:2px dashed var(--rule);display:flex;align-items:center;justify-content:center;font:700 12px "JetBrains Mono",monospace}
+.slots span.got{border-style:solid;border-color:transparent;background:var(--net);color:#fff}
+.slots span.gotu{border-style:solid;border-color:transparent;background:var(--host);color:#fff}
+.slots span.miss{border-color:var(--red);color:var(--red)}
+.lres{margin-top:8px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{border:2px solid var(--ink);border-radius:10px;padding:10px 14px;font-weight:700;background:var(--bg);cursor:grab;min-height:44px}
+.chip.sel{background:var(--ink);color:var(--bg)}
+.chip.done{opacity:.35;cursor:default}
+.doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.door{border:3px solid var(--ink);border-radius:12px 12px 4px 4px;min-height:132px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;background:var(--panel);cursor:pointer}
+.door .num{font:800 34px "JetBrains Mono",monospace}
+.door.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--bg))}
+.door.over{outline:3px dashed var(--net)}
+.door small{color:var(--mute);font-size:13px}
+.term{background:#0d1117;color:#d1d5db;border-radius:12px;padding:14px 16px;font:500 14px/1.5 "JetBrains Mono",monospace;height:340px;overflow:auto;white-space:pre-wrap}
+.term .p{color:#7dd3fc}
+.cmds{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.cmds button{font-family:"JetBrains Mono",monospace;font-size:14px;border-radius:8px}
+.pc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;margin-bottom:10px}
+.pc span{padding:6px 10px;border-radius:8px;background:var(--panel);font-weight:700}
+.pc i{font-style:normal;color:var(--mute)}
+.buckets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bucket{border:2px solid var(--ink);border-radius:14px;padding:14px;min-height:150px}
+.bucket h3{margin:0 0 2px;font-size:22px;font-stretch:112%}
+.bucket p{margin:0 0 8px;font-size:14px;color:var(--mute)}
+.bucket .chip{cursor:default;font-size:14px;padding:6px 10px;min-height:0;margin:3px 3px 0 0;display:inline-block}
+.bucket .chip.bad{border-color:var(--red);color:var(--red)}
+.pick{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+@media(max-width:600px){.buckets{grid-template-columns:minmax(0,1fr)}.term{height:280px;font-size:12px}.slots span{height:24px;font-size:10px}}
+@media(max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.strip{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.rowlab{grid-column:1/-1}.bit{padding:5px 0}td{font-size:13px;padding:6px 4px}}
+@media(prefers-reduced-motion:reduce){.bit{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Aula interativa de Redes</h1>
+<p class="lead" id="lead"></p>
+<nav id="tabs">
+<a href="#tcp-udp">TCP × UDP</a>
+<a href="#portas">Portas</a>
+<a href="#diagnostico">Sem internet?</a>
+<a href="#nuvem">Nuvem</a>
+</nav>
+
+
+
+
+
+
+
+
+<section id="tcp-udp">
+<div class="controls">
+<div class="slash" style="flex:1 1 280px"><div><label for="loss">Perda de pacotes na rede</label><output id="lossOut" style="font-size:40px">20%</output></div><input id="loss" type="range" min="0" max="40" step="5" value="20" aria-label="Perda de pacotes"></div>
+<button class="solid" id="send" type="button">Enviar 10 pacotes</button>
+</div>
+<div class="lane"><h3 style="color:var(--net)">TCP · com conexão: confere e reenvia</h3><div class="track" id="trTcp"><div class="end a">Cliente</div><div class="end b">Servidor</div></div><div class="slots" id="slTcp"></div><div class="lres" id="resTcp"></div></div>
+<div class="lane"><h3 style="color:var(--host)">UDP · sem conexão: manda e não olha para trás</h3><div class="track" id="trUdp"><div class="end a">Cliente</div><div class="end b">Servidor</div></div><div class="slots" id="slUdp"></div><div class="lres" id="resUdp"></div></div>
+<div class="grid2"><div class="steps"><h2>O que observar</h2><ol><li>O TCP começa com o <b>aperto de mão</b>: SYN → SYN-ACK → ACK.</li><li>Pacote perdido no TCP é <b>reenviado</b>: chega tudo, em ordem, mais devagar.</li><li>No UDP chega <b>rápido</b>, mas com buracos.</li><li>Coloque a perda em 0% e depois em 40%. Qual sofre mais?</li></ol></div>
+<div class="card"><h2>Qual combina com cada uso?</h2><p style="margin:0">Download, site, e-mail, SSH → <b style="color:var(--net)">TCP</b>: não pode faltar nada.<br>Chamada de vídeo, jogo online, transmissão ao vivo → <b style="color:var(--host)">UDP</b>: melhor perder um quadro do que atrasar.<br>DNS → <b style="color:var(--host)">UDP</b>, porta 53: pergunta curta, resposta rápida.</p></div></div>
+</section>
+
+<section id="portas" hidden>
+<p style="margin:0 0 10px">O <b>IP é o prédio</b>; a <b>porta é o apartamento</b> de cada serviço. Arraste cada serviço para a porta certa (ou toque no serviço e depois na porta).</p>
+<div class="chips" id="svcList"></div>
+<div class="doors" id="doorList"></div>
+<div class="controls" style="margin-top:14px"><span class="score" id="portScore">0 de 6</span><button type="button" id="portReset">Embaralhar de novo</button></div>
+</section>
+
+<section id="diagnostico" hidden>
+<div class="grid2">
+<div>
+<div class="pc"><span>💻 PC</span><i>→</i><span>Roteador 192.168.0.1</span><i>→</i><span>Provedor</span><i>→</i><span>Internet 8.8.8.8</span><i>·</i><span>DNS 192.168.0.10</span></div>
+<div class="term" id="term" aria-live="polite"></div>
+<div class="cmds" id="cmdList"></div>
+</div>
+<div class="card">
+<h2>Este computador está "sem internet"</h2>
+<p style="margin:0 0 8px">Rode os comandos <b>de baixo para cima</b>: placa → roteador → internet → DNS. Use o mínimo possível. Onde está o defeito?</p>
+<div class="pick" id="diagPick"></div>
+<div class="fb" id="diagFb"></div>
+<div class="controls" style="margin:12px 0 0"><span class="score" id="diagScore">0 de 0</span><button type="button" id="diagNew">Outro computador</button></div>
+<details style="margin-top:12px"><summary>Como pensar</summary><ol style="padding-left:20px;margin:8px 0 0"><li><code>ipconfig</code> sem IP ou "mídia desconectada" → cabo ou placa.</li><li><code>ping</code> no gateway falha → problema na rede local ou no roteador.</li><li>Gateway responde, 8.8.8.8 não → problema no provedor.</li><li>8.8.8.8 responde, mas o nome não → DNS.</li></ol></details>
+</div>
+</div>
+</section>
+
+<section id="nuvem" hidden>
+<div class="grid2" style="margin-bottom:16px">
+<div class="card"><h2 id="cloudQ">Classifique</h2><div class="q" id="cloudItem" style="margin:4px 0 6px"></div><p class="note" id="cloudHint" style="margin:0"></p><div class="pick" id="cloudPick"></div><div class="fb" id="cloudFb"></div><span class="score" id="cloudScore">0 de 0</span></div>
+<div class="steps"><h2>A analogia da pizza</h2><ol style="list-style:none;padding:0"><li><b>No local</b>: você faz a pizza inteira em casa (seu servidor, sua sala).</li><li><b style="color:var(--net)">IaaS</b>: compra a pizza congelada e assa no seu forno. Você recebe a <b>máquina</b> e cuida do resto.</li><li><b style="color:var(--host)">PaaS</b>: pede delivery e só põe a mesa. Você recebe a <b>plataforma</b> e cuida só do seu código.</li><li><b style="color:var(--red)">SaaS</b>: janta no restaurante. Você só <b>usa o programa</b>.</li></ol></div>
+</div>
+<div class="buckets"><div class="bucket"><h3 style="color:var(--net)">IaaS</h3><p>Infraestrutura: máquinas virtuais</p><div id="bkIaaS"></div></div><div class="bucket"><h3 style="color:var(--host)">PaaS</h3><p>Plataforma: publica seu código</p><div id="bkPaaS"></div></div><div class="bucket"><h3 style="color:var(--red)">SaaS</h3><p>Software pronto para usar</p><div id="bkSaaS"></div></div></div>
+</section>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const toInt=s=>{const p=String(s).trim().split('.');if(p.length!==4)return null;let v=0;for(const x of p){if(!/^\d{1,3}$/.test(x)||+x>255)return null;v=v*256+(+x)}return v>>>0};
+const toStr=v=>[24,16,8,0].map(s=>(v>>>s)&255).join('.');
+const maskOf=c=>c===0?0:(0xFFFFFFFF<<(32-c))>>>0;
+const info=(ip,c)=>{const m=maskOf(c),net=(ip&m)>>>0,bc=(net|(~m>>>0))>>>0,n=32-c;return{m,net,bc,n,hosts:2**n-2,first:(net+1)>>>0,last:(bc-1)>>>0}};
+const octs=v=>[24,16,8,0].map(s=>(v>>>s)&255);
+const bin=x=>x.toString(2).padStart(8,'0');
+const cutOct=c=>Math.min(3,Math.floor(c/8));
+const fmt=n=>n.toLocaleString('pt-BR');
+
+function strip(el,rows,c){
+  const k=cutOct(c);
+  el.innerHTML=rows.map(([lab,val,kind])=>`<div class="rowlab">${lab}</div>`+octs(val).map((o,i)=>`<div class="oct ${i===k&&c%8?'cut':''}"><div class="dec">${o}</div><div class="bits">${[...bin(o)].map((b,j)=>{const pos=i*8+j,isNet=pos<c;const cls=kind==='mask'?(isNet?'m1':'m0'):(isNet?'n':'h');return `<span class="bit ${cls}">${b}</span>`}).join('')}</div></div>`).join('')).join('');
+}
+
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+/* ---------- TCP x UDP ---------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const slots=(el)=>{el.innerHTML=Array.from({length:10},(_,i)=>`<span>${i+1}</span>`).join('')};
+slots($('slTcp'));slots($('slUdp'));
+$('loss').addEventListener('input',()=>$('lossOut').textContent=$('loss').value+'%');
+function fly(track,label,cls,lost,back){
+  return new Promise(res=>{const p=document.createElement('div');p.className='pk '+cls;p.textContent=label;const W=track.clientWidth;
+    p.style.left=back?(W-62-44)+'px':'62px';track.appendChild(p);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.left=(lost?(W/2-20):(back?62:W-62-44))+'px'}));
+    setTimeout(()=>{if(lost){p.classList.add('lost')}setTimeout(()=>{p.remove();res(!lost)},lost?300:40)},lost?280:520)})}
+let running=false;
+async function tcp(loss){
+  const tr=$('trTcp'),sl=$('slTcp');slots(sl);$('resTcp').textContent='Aperto de mão…';const t0=performance.now();let resent=0;
+  await fly(tr,'SYN','ctl',false,false);await fly(tr,'SYN-ACK','ctl',false,true);await fly(tr,'ACK','ctl',false,false);
+  for(let i=1;i<=10;i++){let ok=false;$('resTcp').textContent=`Enviando o pacote ${i} e esperando a confirmação (ACK)…`;while(!ok){ok=await fly(tr,String(i),'',Math.random()*100<loss,false);if(!ok){resent++;$('resTcp').textContent=`Pacote ${i} perdido: o TCP percebe e reenvia…`;await sleep(250)}}
+    sl.children[i-1].className='got';await fly(tr,'ACK','back',false,true)}
+  $('resTcp').textContent=`Chegaram 10 de 10, em ordem · ${resent} reenvio(s) · ${((performance.now()-t0)/1000).toFixed(1)} s`;}
+async function udp(loss){
+  const tr=$('trUdp'),sl=$('slUdp');slots(sl);$('resUdp').textContent='Enviando sem conexão…';const t0=performance.now();let got=0;const jobs=[];
+  for(let i=1;i<=10;i++){const lost=Math.random()*100<loss;jobs.push(fly(tr,String(i),'udp',lost,false).then(ok=>{sl.children[i-1].className=ok?'gotu':'miss';if(ok)got++}));await sleep(160)}
+  await Promise.all(jobs);
+  $('resUdp').textContent=`Chegaram ${got} de 10 · ${10-got} perdido(s) e ninguém reenviou · ${((performance.now()-t0)/1000).toFixed(1)} s`;}
+$('send').addEventListener('click',async()=>{if(running)return;running=true;$('send').disabled=true;const l=+$('loss').value;await Promise.all([tcp(l),udp(l)]);running=false;$('send').disabled=false});
+
+/* ---------- Portas ---------- */
+const services=[['SSH',22,'TCP · acesso remoto ao terminal, criptografado'],['DNS',53,'UDP · traduz nome em IP'],['HTTP',80,'TCP · site sem criptografia'],['HTTPS',443,'TCP · site com cadeado'],['FTP',21,'TCP · transferência de arquivos'],['SMTP',25,'TCP · envio de e-mail']];
+let selSvc=null,placed={};
+function portsInit(){placed={};selSvc=null;const sh=[...services].sort(()=>Math.random()-.5);const doors=[...services].sort((a,b)=>a[1]-b[1]);
+  $('svcList').innerHTML=sh.map(s=>`<button type="button" class="chip" draggable="true" data-s="${s[0]}">${s[0]}</button>`).join('');
+  $('doorList').innerHTML=doors.map(s=>`<div class="door" data-p="${s[1]}" tabindex="0" role="button" aria-label="Porta ${s[1]}"><div class="num">${s[1]}</div><small>porta vazia</small></div>`).join('');portScore()}
+function portScore(){$('portScore').textContent=`${Object.keys(placed).length} de 6`}
+function tryPlace(name,port){const s=services.find(x=>x[0]===name);const door=$('doorList').querySelector(`[data-p="${port}"]`);if(!s||!door||placed[name])return;
+  if(s[1]===+port){placed[name]=1;door.classList.add('ok');door.querySelector('small').innerHTML=`<b>${s[0]}</b><br>${s[2]}`;$('svcList').querySelector(`[data-s="${name}"]`).classList.add('done')}
+  else{door.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:300});door.querySelector('small').textContent=`${name} não mora aqui`}
+  selSvc=null;$('svcList').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));portScore()}
+$('svcList').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c||c.classList.contains('done'))return;selSvc=c.dataset.s;$('svcList').querySelectorAll('.chip').forEach(x=>x.classList.toggle('sel',x===c))});
+$('svcList').addEventListener('dragstart',e=>{const c=e.target.closest('.chip');if(c)e.dataTransfer.setData('text/plain',c.dataset.s)});
+$('doorList').addEventListener('click',e=>{const d=e.target.closest('.door');if(d&&selSvc)tryPlace(selSvc,d.dataset.p)});
+$('doorList').addEventListener('keydown',e=>{const d=e.target.closest('.door');if(d&&selSvc&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tryPlace(selSvc,d.dataset.p)}});
+$('doorList').addEventListener('dragover',e=>{const d=e.target.closest('.door');if(d){e.preventDefault();d.classList.add('over')}});
+$('doorList').addEventListener('dragleave',e=>{const d=e.target.closest('.door');if(d)d.classList.remove('over')});
+$('doorList').addEventListener('drop',e=>{const d=e.target.closest('.door');if(!d)return;e.preventDefault();d.classList.remove('over');tryPlace(e.dataTransfer.getData('text/plain'),d.dataset.p)});
+$('portReset').addEventListener('click',portsInit);
+
+/* ---------- Diagnóstico ---------- */
+const faults={cabo:'Cabo ou placa de rede',gateway:'Roteador (gateway)',provedor:'Provedor (internet)',dns:'Servidor DNS'};
+let fault='dns',used=0,diagDone=false,dscore={ok:0,total:0};
+const pr='C:\\Users\\aluno>';
+const pingOk=(ip,ms)=>`Disparando ${ip} com 32 bytes de dados:\n`+[0,1,2,3].map(()=>`Resposta de ${ip}: bytes=32 tempo=${ms+rnd(0,4)}ms TTL=${ip.startsWith('192')?64:117}`).join('\n')+`\n\nPacotes: Enviados = 4, Recebidos = 4, Perdidos = 0 (0% de perda)`;
+const pingTo=ip=>`Disparando ${ip} com 32 bytes de dados:\n`+'Esgotado o tempo limite do pedido.\n'.repeat(4)+`\nPacotes: Enviados = 4, Recebidos = 0, Perdidos = 4 (100% de perda)`;
+const pingFail=ip=>`Disparando ${ip} com 32 bytes de dados:\n`+'A transmissão falhou. Falha geral.\n'.repeat(4)+`\nPacotes: Enviados = 4, Recebidos = 0, Perdidos = 4 (100% de perda)`;
+const cmds={
+ 'ipconfig':()=>fault==='cabo'?`Adaptador Ethernet Ethernet:\n\n   Estado da mídia. . . . . . . . . : mídia desconectada`:`Adaptador Ethernet Ethernet:\n\n   Endereço IPv4. . . . . . . . . . : 192.168.0.37\n   Máscara de Sub-rede. . . . . . . : 255.255.255.0\n   Gateway Padrão . . . . . . . . . : 192.168.0.1\n   Servidores DNS . . . . . . . . . : 192.168.0.10`,
+ 'ping 192.168.0.1':()=>fault==='cabo'?pingFail('192.168.0.1'):fault==='gateway'?pingTo('192.168.0.1'):pingOk('192.168.0.1',1),
+ 'ping 8.8.8.8':()=>fault==='cabo'?pingFail('8.8.8.8'):(fault==='gateway'||fault==='provedor')?pingTo('8.8.8.8'):pingOk('8.8.8.8',18),
+ 'nslookup www.edufor.edu.br':()=>fault==='cabo'?`*** Não é possível localizar o servidor padrão.`:fault==='dns'?`DNS request timed out.\n    timeout was 2 seconds.\nServidor:  UnKnown\nAddress:  192.168.0.10\n\n*** Tempo limite da solicitação a UnKnown esgotado`:`Servidor:  dns.lab.local\nAddress:  192.168.0.10\n\nNão é resposta autoritativa:\nNome:    www.edufor.edu.br\nAddress:  200.150.20.10`,
+ 'ping www.edufor.edu.br':()=>fault==='cabo'?`A solicitação ping não pôde encontrar o host www.edufor.edu.br.`:fault==='dns'?`A solicitação ping não pôde encontrar o host www.edufor.edu.br. Verifique o nome e tente novamente.`:(fault==='gateway'||fault==='provedor')?`A solicitação ping não pôde encontrar o host www.edufor.edu.br. Verifique o nome e tente novamente.`:pingOk('200.150.20.10',22),
+ 'tracert -d 8.8.8.8':()=>{const h=[`  1     1 ms     1 ms     1 ms  192.168.0.1`,`  2     9 ms     8 ms    10 ms  200.150.10.1`,`  3    17 ms    18 ms    16 ms  187.16.216.1`,`  4    19 ms    18 ms    20 ms  8.8.8.8`];
+   const head='Rastreando a rota para 8.8.8.8 com no máximo 30 saltos\n\n';
+   if(fault==='cabo')return 'Falha na transmissão. Falha geral.';
+   if(fault==='gateway')return head+'  1     *        *        *     Esgotado o tempo limite do pedido.\n  2     *        *        *     Esgotado o tempo limite do pedido.\n\n(interrompido)';
+   if(fault==='provedor')return head+h[0]+'\n  2     *        *        *     Esgotado o tempo limite do pedido.\n  3     *        *        *     Esgotado o tempo limite do pedido.\n\n(interrompido)';
+   return head+h.join('\n')+'\n\nRastreamento concluído.'}
+};
+$('cmdList').innerHTML=Object.keys(cmds).map(c=>`<button type="button" data-c="${c}">${c}</button>`).join('');
+$('diagPick').innerHTML=Object.entries(faults).map(([k,v])=>`<button type="button" data-f="${k}">${v}</button>`).join('');
+function diagNew(){const ks=Object.keys(faults);fault=ks[rnd(0,ks.length-1)];used=0;diagDone=false;$('term').innerHTML=`<span class="p">Microsoft Windows · simulação</span>\n"Professor, estou sem internet!"\n\n`;$('diagFb').className='fb'}
+$('cmdList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;used++;const c=b.dataset.c;$('term').innerHTML+=`<span class="p">${pr}</span>${c}\n${cmds[c]()}\n\n`;$('term').scrollTop=$('term').scrollHeight});
+$('diagPick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||diagDone)return;diagDone=true;const ok=b.dataset.f===fault;dscore.total++;if(ok)dscore.ok++;$('diagScore').textContent=`${dscore.ok} de ${dscore.total}`;
+  const why={cabo:'O ipconfig mostra "mídia desconectada" e o ping dá "falha geral": o PC nem chega ao roteador.',gateway:'O ping no gateway (192.168.0.1) não responde: o problema está no roteador ou na rede local.',provedor:'O gateway responde, mas o 8.8.8.8 não, e o tracert para depois do roteador: o defeito está no provedor.',dns:'O ping no 8.8.8.8 funciona, mas o nome não resolve: a internet está ok, o DNS não.'}[fault];
+  $('diagFb').className='fb show '+(ok?'ok':'err');$('diagFb').innerHTML=`<b>${ok?'Certo!':'Não era isso. O defeito era: '+faults[fault]}</b><br>${why}<br><span class="note">Você usou ${used} comando(s). ${used<=3&&ok?'Diagnóstico de profissional!':'Dá para resolver com 3 ou menos.'}</span>`});
+$('diagNew').addEventListener('click',diagNew);
+
+/* ---------- Nuvem ---------- */
+const cloud=[['Máquina virtual na AWS (EC2)','IaaS','Você recebe a máquina e instala o sistema.'],['Gmail','SaaS','Você só usa o programa.'],['Google Drive','SaaS','Pronto para usar no navegador.'],['Heroku ou Vercel','PaaS','Você manda o código; eles cuidam do servidor.'],['Firebase Hosting','PaaS','Publica o seu site sem cuidar de servidor.'],['Netflix','SaaS','Você só assiste.'],['Azure Virtual Machines','IaaS','Uma VM alugada, igual à do VirtualBox.'],['Google App Engine','PaaS','Plataforma para rodar o seu app.'],['Microsoft 365 (Word online)','SaaS','Programa pronto no navegador.'],['Servidor Linux na Oracle Cloud','IaaS','Uma máquina para você administrar.']];
+let cq=[],ci=0,cs={ok:0,total:0};
+function cloudInit(){cq=[...cloud].sort(()=>Math.random()-.5);ci=0;cs={ok:0,total:0};['IaaS','PaaS','SaaS'].forEach(k=>$('bk'+k).innerHTML='');cloudShow()}
+function cloudShow(){$('cloudScore').textContent=`${cs.ok} de ${cs.total}`;if(ci>=cq.length){$('cloudItem').textContent='Fim! Clique para recomeçar.';$('cloudHint').textContent='';$('cloudPick').innerHTML='<button type="button" id="cloudAgain" class="solid">Recomeçar</button>';return}
+  $('cloudQ').textContent=`Classifique · ${ci+1} de ${cq.length}`;$('cloudItem').textContent=cq[ci][0];$('cloudHint').textContent='É IaaS, PaaS ou SaaS?';
+  $('cloudPick').innerHTML=['IaaS','PaaS','SaaS'].map(k=>`<button type="button" data-k="${k}">${k}</button>`).join('')}
+$('cloudPick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='cloudAgain'){cloudInit();$('cloudFb').className='fb';return}
+  const it=cq[ci],ok=b.dataset.k===it[1];cs.total++;if(ok)cs.ok++;
+  $('bk'+it[1]).insertAdjacentHTML('beforeend',`<span class="chip ${ok?'':'bad'}">${it[0]}</span>`);
+  $('cloudFb').className='fb show '+(ok?'ok':'err');$('cloudFb').innerHTML=`<b>${it[0]}: ${ok?'certo!':'é '+it[1]+'.'}</b> ${it[2]}`;ci++;cloudShow()});
+
+/* ---------- Abas ---------- */
+const tabs=['tcp-udp','portas','diagnostico','nuvem'];
+const leads={'tcp-udp':'Mande os mesmos 10 pacotes por TCP e por UDP e compare.',portas:'Cada serviço mora numa porta. Encaixe cada um no lugar certo.',diagnostico:'Um computador sem internet: descubra o defeito com os comandos certos.',nuvem:'IaaS, PaaS ou SaaS? Classifique serviços que você usa todo dia.'};
+function route(){const h=location.hash.slice(1);const t=tabs.includes(h)?h:'tcp-udp';$('lead').innerHTML=leads[t];tabs.forEach(x=>$(x).hidden=x!==t);document.querySelectorAll('#tabs a').forEach(a=>a.toggleAttribute('aria-current',a.getAttribute('href')==='#'+t));}
+function a11y(){document.querySelectorAll('#tabs a[aria-current]').forEach(a=>a.setAttribute('aria-current','page'))}
+window.addEventListener('hashchange',()=>{route();a11y()});
+route();a11y();portsInit();diagNew();cloudInit();
+}
+</script>
+</body>
+</html>

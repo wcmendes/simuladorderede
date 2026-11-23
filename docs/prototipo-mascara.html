@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Máscara bit a bit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday learning tool for a networks class, projected in a Meet call and opened by students
+   IDEA a ruler of 32 bits: the slash slides along it and paints network blue, host orange, like the class slides
+   PICTURE the 32-bit strip of the IP over the mask strip, with the octet the slash cuts drawn as a 0-255 ruler of blocks
+   COLOUR white ground, ink black, network blue #2459C4, host orange #C65A12, signal red #e4002b for the answer
+   TYPE Archivo wide 800 for titles and figures + Archivo; JetBrains Mono only for bits and addresses
+   LAYOUT tabs across the top; strip full width; result figures in a ruled column beside the worked steps; phone stacks */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e0e0e);--ink:light-dark(#111,#f2f2f2);--mute:light-dark(#5b6270,#a3a9b5);--rule:light-dark(#d9dce2,#2c2f35);--panel:light-dark(#f4f5f7,#17191d);--net:#2459C4;--host:#C65A12;--red:#e4002b;--netl:light-dark(#e3eafa,#1b2742);--hostl:light-dark(#fbe7da,#3a2416);--ok:light-dark(#137a3f,#4cc983)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Archivo,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:1240px;margin:0 auto;padding:clamp(18px,3vw,40px) max(4vw,16px) 48px}
+h1{font-stretch:112%;font-weight:800;font-size:clamp(30px,4.4vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--mute);margin:0 0 18px;max-width:68ch}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+nav{display:flex;flex-wrap:wrap;gap:6px;border-bottom:3px solid var(--ink);margin-bottom:22px}
+nav a{padding:10px 16px;border-radius:8px 8px 0 0;color:var(--ink);text-decoration:none;font-weight:700;min-height:44px;display:flex;align-items:center}
+nav a[aria-current=page]{background:var(--ink);color:var(--bg)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+section[hidden]{display:none}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end;margin-bottom:18px}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
+input[type=text],input[type=number],select{font:500 18px "JetBrains Mono",monospace;padding:10px 12px;border:2px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);width:17.5ch;min-height:46px}
+input.bad{border-color:var(--red)}
+.slash{display:flex;align-items:center;gap:14px;flex:1 1 320px}
+.slash output{font:800 clamp(40px,6vw,64px)/1 Archivo,system-ui,sans-serif;font-stretch:112%;min-width:2.6ch}
+input[type=range]{flex:1;accent-color:var(--net);height:44px}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 15px Archivo,sans-serif;border:2px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:999px;padding:9px 16px;min-height:44px;cursor:pointer}
+button:hover{background:var(--panel)}
+button.solid{background:var(--ink);color:var(--bg)}
+.strip{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:10px 14px;align-items:center;padding:18px;border:2px solid var(--ink);border-radius:14px;margin-bottom:14px}
+.rowlab{font-weight:700;font-size:15px}
+.oct{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.dec{font:700 clamp(18px,2.4vw,26px) "JetBrains Mono",monospace;text-align:center}
+.bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}
+.bit{font:700 clamp(12px,1.6vw,18px) "JetBrains Mono",monospace;text-align:center;padding:7px 0;border-radius:4px;color:#fff;transition:background .25s}
+.bit.n{background:var(--net)}.bit.h{background:var(--host)}
+.bit.m1{background:var(--netl);color:var(--net)}.bit.m0{background:var(--hostl);color:var(--host)}
+.cut{outline:3px solid var(--red);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--mute);margin:0 0 20px}
+.legend b{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px}
+.figs{border-top:3px solid var(--ink)}
+.figs div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.figs span{color:var(--mute)}
+.figs strong{font:700 19px "JetBrains Mono",monospace;white-space:nowrap}
+.figs .big strong{font:800 clamp(26px,3.4vw,36px) Archivo,system-ui,sans-serif;font-stretch:112%;color:var(--red)}
+.steps{background:var(--panel);border-radius:14px;padding:18px 20px}
+.steps h2,.card h2{font-size:20px;margin:0 0 10px;font-stretch:110%}
+.steps ol{margin:0;padding-left:22px}
+.steps li{margin:8px 0}
+.ruler{margin-top:14px}
+.rbar{display:flex;height:46px;border-radius:8px;overflow:hidden;border:2px solid var(--ink)}
+.rbar div{flex:1;display:flex;align-items:center;justify-content:center;font:600 12px "JetBrains Mono",monospace;border-right:1px solid var(--bg);background:var(--hostl);color:var(--host);overflow:hidden;white-space:nowrap}
+.rbar div.on{background:var(--red);color:#fff;font-weight:700}
+.rscale{display:flex;justify-content:space-between;font:500 13px "JetBrains Mono",monospace;color:var(--mute);margin-top:4px}
+.card{border:2px solid var(--rule);border-radius:14px;padding:18px 20px}
+.verdict{font:800 clamp(26px,3.6vw,40px)/1.1 Archivo,system-ui,sans-serif;font-stretch:112%;margin:6px 0 10px}
+.verdict.yes{color:var(--ok)}.verdict.no{color:var(--red)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;border-bottom:3px solid var(--ink);padding:8px}
+td{border-bottom:1px solid var(--rule);padding:8px;white-space:nowrap}
+td.m{font-family:"JetBrains Mono",monospace}
+.q{font:700 clamp(22px,3vw,30px)/1.25 Archivo,system-ui,sans-serif;margin:4px 0 14px}
+.fb{margin-top:14px;padding:14px 16px;border-radius:10px;display:none}
+.fb.show{display:block}
+.fb.ok{background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.fb.err{background:color-mix(in srgb,var(--red) 12%,transparent)}
+.score{font:800 22px Archivo,system-ui,sans-serif;font-stretch:112%}
+.note{font-size:14px;color:var(--mute)}
+@media(max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.strip{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.rowlab{grid-column:1/-1}.bit{padding:5px 0}td{font-size:13px;padding:6px 4px}}
+@media(prefers-reduced-motion:reduce){.bit{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Máscara de rede, bit a bit</h1>
+<p class="lead">Mexa no "/" e veja onde termina a <b style="color:var(--net)">rede</b> e começa o <b style="color:var(--host)">host</b>. Cada número a mais no "/" pinta mais um bit de azul.</p>
+<nav id="tabs">
+<a href="#calcular">Calcular</a>
+<a href="#mesma-rede">Mesma rede?</a>
+<a href="#dividir">Dividir em sub-redes</a>
+<a href="#desafio">Desafio</a>
+</nav>
+
+<section id="calcular">
+<div class="controls">
+<div><label for="ip">Endereço IP</label><input id="ip" type="text" value="192.168.10.70" inputmode="decimal" autocomplete="off"></div>
+<div class="slash"><output id="cidrOut">/26</output><input id="cidr" type="range" min="8" max="30" value="26" aria-label="Tamanho da máscara em bits"></div>
+</div>
+<div class="presets" id="presets" style="margin-bottom:18px"></div>
+<div class="strip" id="strip"></div>
+<div class="legend"><span><b style="background:var(--net)"></b>bit de rede (máscara = 1)</span><span><b style="background:var(--host)"></b>bit de host (máscara = 0)</span><span><b style="outline:3px solid var(--red)"></b>bloco onde a máscara "corta"</span></div>
+<div class="grid2">
+<div class="figs" id="figs"></div>
+<div class="steps"><h2>A conta, passo a passo</h2><ol id="steps"></ol>
+<div class="ruler" id="ruler"></div></div>
+</div>
+</section>
+
+<section id="mesma-rede" hidden>
+<div class="controls">
+<div><label for="ipa">Computador A</label><input id="ipa" type="text" value="192.168.10.25"></div>
+<div><label for="ipb">Computador B</label><input id="ipb" type="text" value="192.168.10.200"></div>
+<div class="slash"><output id="cidr2Out">/25</output><input id="cidr2" type="range" min="8" max="30" value="25" aria-label="Máscara usada pelos dois"></div>
+</div>
+<div class="strip" id="strip2"></div>
+<div class="grid2">
+<div class="card"><div class="verdict" id="verdict"></div><p id="why" style="margin:0"></p></div>
+<div class="steps"><h2>Como decidir</h2><ol><li>Pegue só os bits <b style="color:var(--net)">azuis</b>, os de rede, dos dois IPs.</li><li>Se forem todos iguais, é a <b>mesma rede</b>: conversam direto, pelo switch.</li><li>Se um único bit azul for diferente, são <b>redes diferentes</b>: precisam do roteador (gateway).</li><li>Teste: deixe os mesmos IPs e mude o "/". A resposta muda!</li></ol></div>
+</div>
+</section>
+
+<section id="dividir" hidden>
+<div class="controls">
+<div><label for="base">Rede original</label><input id="base" type="text" value="192.168.20.0/24"></div>
+<div><label for="parts">Dividir em</label><select id="parts"><option>2</option><option selected>4</option><option>8</option><option>16</option></select></div>
+</div>
+<div class="card" style="margin-bottom:18px"><h2 id="divTitle"></h2><div id="divBar"></div><p class="note" id="divNote" style="margin:10px 0 0"></p></div>
+<div class="scroll"><table><thead><tr><th>Sub-rede</th><th>Rede / CIDR</th><th>Primeiro host</th><th>Último host</th><th>Broadcast</th><th>Hosts</th></tr></thead><tbody id="divRows"></tbody></table></div>
+</section>
+
+<section id="desafio" hidden>
+<div class="grid2">
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span class="note" id="qKind"></span><span class="score" id="score">0 de 0</span></div>
+<div class="q" id="question"></div>
+<form id="qForm" class="controls" style="margin:0"><div><label for="ans">Sua resposta</label><input id="ans" type="text" autocomplete="off"></div><button class="solid" type="submit">Conferir</button><button type="button" id="next">Outra pergunta</button></form>
+<div class="fb" id="fb"></div>
+</div>
+<div class="steps"><h2>O truque do salto</h2><ol>
+<li>Ache o bloco do IP onde a máscara <b>deixa de ser 255</b>.</li>
+<li><b>Salto</b> = 256 − valor da máscara nesse bloco. Ex.: /26 → máscara .192 → salto 64.</li>
+<li>As redes andam de salto em salto: 0, 64, 128, 192.</li>
+<li><b>Rede</b> = o múltiplo do salto logo abaixo do IP. <b>Broadcast</b> = próxima rede − 1.</li>
+<li><b>Hosts</b> = 2<sup>n</sup> − 2, n = 32 − o número do "/".</li></ol>
+<p class="note" style="margin:12px 0 0">Respostas aceitas: o endereço completo (192.168.10.64) ou só um número quando a pergunta pedir.</p></div>
+</div>
+</section>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const toInt=s=>{const p=String(s).trim().split('.');if(p.length!==4)return null;let v=0;for(const x of p){if(!/^\d{1,3}$/.test(x)||+x>255)return null;v=v*256+(+x)}return v>>>0};
+const toStr=v=>[24,16,8,0].map(s=>(v>>>s)&255).join('.');
+const maskOf=c=>c===0?0:(0xFFFFFFFF<<(32-c))>>>0;
+const info=(ip,c)=>{const m=maskOf(c),net=(ip&m)>>>0,bc=(net|(~m>>>0))>>>0,n=32-c;return{m,net,bc,n,hosts:2**n-2,first:(net+1)>>>0,last:(bc-1)>>>0}};
+const octs=v=>[24,16,8,0].map(s=>(v>>>s)&255);
+const bin=x=>x.toString(2).padStart(8,'0');
+const cutOct=c=>Math.min(3,Math.floor(c/8));
+const fmt=n=>n.toLocaleString('pt-BR');
+
+function strip(el,rows,c){
+  const k=cutOct(c);
+  el.innerHTML=rows.map(([lab,val,kind])=>`<div class="rowlab">${lab}</div>`+octs(val).map((o,i)=>`<div class="oct ${i===k&&c%8?'cut':''}"><div class="dec">${o}</div><div class="bits">${[...bin(o)].map((b,j)=>{const pos=i*8+j,isNet=pos<c;const cls=kind==='mask'?(isNet?'m1':'m0'):(isNet?'n':'h');return `<span class="bit ${cls}">${b}</span>`}).join('')}</div></div>`).join('')).join('');
+}
+
+/* ---------- Calcular ---------- */
+const presets=[['192.168.10.37',24],['192.168.10.200',25],['192.168.10.70',26],['10.0.5.20',16],['172.16.5.1',20],['192.168.1.130',27]];
+$('presets').innerHTML=presets.map(([a,c],i)=>`<button type="button" data-p="${i}">${a}/${c}</button>`).join('');
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const [a,c]=presets[+b.dataset.p];$('ip').value=a;$('cidr').value=c;calc()});
+
+function calc(){
+  const c=+$('cidr').value;$('cidrOut').textContent='/'+c;
+  const ip=toInt($('ip').value);$('ip').classList.toggle('bad',ip===null);if(ip===null)return;
+  const r=info(ip,c);
+  strip($('strip'),[['IP',ip,'ip'],['Máscara',r.m,'mask']],c);
+  $('figs').innerHTML=[['Máscara',toStr(r.m)],['Rede',toStr(r.net)],['Primeiro host',toStr(r.first)],['Último host',toStr(r.last)],['Broadcast',toStr(r.bc)]].map(([a,b])=>`<div><span>${a}</span><strong>${b}</strong></div>`).join('')+`<div class="big"><span>Computadores que cabem</span><strong>${fmt(r.hosts)}</strong></div>`;
+  const k=cutOct(c),mk=octs(r.m)[k],ipk=octs(ip)[k],jump=256-mk,netk=octs(r.net)[k];
+  const names=['1º','2º','3º','4º'];
+  const st=[];
+  st.push(`<b>/${c}</b> = ${c} bits de rede e <b>${r.n}</b> bits de host (32 − ${c}).`);
+  st.push(`Bits de rede viram 1, de host viram 0. Em decimal: máscara <span class="mono">${toStr(r.m)}</span>.`);
+  if(c%8===0){
+    const full=c/8;
+    st.push(`Os ${full} primeiros blocos são 255: eles são a "rua" e ficam iguais ao IP. Os outros viram 0 na rede e 255 no broadcast.`);
+  }else{
+    st.push(`A máscara corta o <b>${names[k]} bloco</b> (valor ${mk}). <b>Salto</b> = 256 − ${mk} = <b>${jump}</b>. As redes andam de ${jump} em ${jump}.`);
+    st.push(`O IP tem <b>${ipk}</b> nesse bloco. O múltiplo de ${jump} logo abaixo é <b>${netk}</b>: rede <span class="mono">${toStr(r.net)}</span>. A próxima rede começa em ${netk+jump}, então o broadcast é ${netk+jump-1}.`);
+  }
+  st.push(`Hosts = 2<sup>${r.n}</sup> − 2 = ${fmt(2**r.n)} − 2 = <b>${fmt(r.hosts)}</b>. O −2 tira a rede e o broadcast.`);
+  $('steps').innerHTML=st.map(s=>`<li>${s}</li>`).join('');
+  if(c%8){
+    const nb=256/jump,show=nb<=16;
+    $('ruler').innerHTML=`<div class="note" style="margin-bottom:6px">Régua do ${names[k]} bloco: ${nb} pedaços de ${jump}. O seu IP (${ipk}) cai no vermelho.</div><div class="rbar">${Array.from({length:nb},(_,i)=>`<div class="${i*jump===netk?'on':''}">${show?i*jump:''}</div>`).join('')}</div><div class="rscale"><span>0</span><span>255</span></div>`;
+  }else $('ruler').innerHTML='';
+}
+$('ip').addEventListener('input',calc);$('cidr').addEventListener('input',calc);
+
+/* ---------- Mesma rede ---------- */
+function same(){
+  const c=+$('cidr2').value;$('cidr2Out').textContent='/'+c;
+  const a=toInt($('ipa').value),b=toInt($('ipb').value);
+  $('ipa').classList.toggle('bad',a===null);$('ipb').classList.toggle('bad',b===null);if(a===null||b===null)return;
+  strip($('strip2'),[['A',a,'ip'],['B',b,'ip'],['Máscara',maskOf(c),'mask']],c);
+  const ra=info(a,c),rb=info(b,c),eq=ra.net===rb.net;
+  let diff=-1;for(let i=0;i<c;i++){if(((a>>>(31-i))&1)!==((b>>>(31-i))&1)){diff=i;break}}
+  $('verdict').className='verdict '+(eq?'yes':'no');$('verdict').textContent=eq?'Mesma rede':'Redes diferentes';
+  $('why').innerHTML=eq?`Os ${c} bits azuis são iguais. As duas redes dão <span class="mono">${toStr(ra.net)}</span>/${c}.`:`O bit ${diff+1}, que é de rede, é diferente (${names2(diff)}). A fica em <span class="mono">${toStr(ra.net)}</span> e B em <span class="mono">${toStr(rb.net)}</span>.`;
+  [...$('strip2').querySelectorAll('.oct')].forEach((o,idx)=>{if(idx>7)return;const row=Math.floor(idx/4),oi=idx%4;[...o.querySelectorAll('.bit')].forEach((bt,j)=>{bt.style.outline=(oi*8+j===diff)?'3px solid var(--red)':''})});
+}
+const names2=i=>`no ${Math.floor(i/8)+1}º bloco`;
+['ipa','ipb','cidr2'].forEach(id=>$(id).addEventListener('input',same));
+
+/* ---------- Dividir ---------- */
+function divide(){
+  const [s,cs]=$('base').value.split('/');const ip=toInt(s),c=+cs;
+  const okIn=ip!==null&&c>=8&&c<=28;$('base').classList.toggle('bad',!okIn);if(!okIn)return;
+  const p=+$('parts').value,add=Math.log2(p),nc=c+add;
+  if(nc>30){$('divTitle').textContent='Não cabe: sobrariam menos de 2 hosts por sub-rede';$('divRows').innerHTML='';$('divBar').innerHTML='';return}
+  const base=info(ip,c).net,size=2**(32-nc);
+  $('divTitle').textContent=`${toStr(base)}/${c} em ${p} sub-redes /${nc}`;
+  const rows=Array.from({length:p},(_,i)=>info((base+i*size)>>>0,nc));
+  $('divBar').innerHTML=`<div class="rbar">${rows.map((r,i)=>`<div style="background:${i%2?'var(--netl)':'var(--hostl)'};color:var(--ink)">${p<=8?'Sub-rede '+(i+1):i+1}</div>`).join('')}</div>`;
+  $('divNote').innerHTML=`${p} = 2<sup>${add}</sup>, então a máscara ganha <b>${add} bit${add>1?'s':''}</b>: /${c} → /${nc} (${toStr(maskOf(nc))}). Cada sub-rede tem ${fmt(size)} endereços e <b>${fmt(size-2)} hosts</b>.`;
+  $('divRows').innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td class="m">${toStr(r.net)}/${nc}</td><td class="m">${toStr(r.first)}</td><td class="m">${toStr(r.last)}</td><td class="m">${toStr(r.bc)}</td><td>${fmt(r.hosts)}</td></tr>`).join('');
+}
+$('base').addEventListener('input',divide);$('parts').addEventListener('change',divide);
+
+/* ---------- Desafio ---------- */
+let cur=null,score={ok:0,total:0};
+try{const s=JSON.parse(localStorage.getItem('mascara-score')||'null');if(s)score=s}catch(e){}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const bases=[[192,168],[10,0],[172,16]];
+function newQ(){
+  const b=bases[rnd(0,2)],c=[24,24,25,25,26,26,27,16][rnd(0,7)];
+  const ip=toInt(`${b[0]}.${b[1]}.${rnd(0,30)}.${rnd(1,254)}`),r=info(ip,c);
+  const kinds=['rede','broadcast','hosts','mesma'];const kind=kinds[rnd(0,3)];
+  let q,ans,check;
+  if(kind==='rede'){q=`Qual é o endereço de rede de <span class="mono">${toStr(ip)}/${c}</span>?`;ans=toStr(r.net);check=v=>toInt(v)===r.net}
+  if(kind==='broadcast'){q=`Qual é o broadcast de <span class="mono">${toStr(ip)}/${c}</span>?`;ans=toStr(r.bc);check=v=>toInt(v)===r.bc}
+  if(kind==='hosts'){q=`Quantos computadores cabem numa rede <span class="mono">/${c}</span>?`;ans=String(r.hosts);check=v=>+String(v).replace(/\D/g,'')===r.hosts}
+  if(kind==='mesma'){const other=(ip^(1<<rnd(0,10)))>>>0;const ro=info(other,c);const eq=ro.net===r.net;q=`<span class="mono">${toStr(ip)}</span> e <span class="mono">${toStr(other)}</span>, os dois com <span class="mono">/${c}</span>. Mesma rede? (sim ou não)`;ans=eq?'sim':'não';check=v=>{const t=String(v).trim().toLowerCase().replace('nao','não');return t===ans};cur={ip,other,c}}
+  cur={...cur,ip,c,kind,ans,check};
+  $('qKind').textContent={rede:'Endereço de rede',broadcast:'Broadcast',hosts:'Quantidade de hosts',mesma:'Mesma rede?'}[kind];
+  $('question').innerHTML=q;$('ans').value='';$('fb').className='fb';$('ans').focus({preventScroll:true});
+}
+function explain(){
+  const {ip,c,kind}=cur,r=info(ip,c),k=cutOct(c),mk=octs(r.m)[k],j=256-mk;
+  if(kind==='hosts')return `/${c} deixa ${32-c} bits de host: 2<sup>${32-c}</sup> − 2 = ${fmt(r.hosts)}.`;
+  const base=c%8?`Máscara ${toStr(r.m)}: salto = 256 − ${mk} = ${j}. O IP tem ${octs(ip)[k]} no ${k+1}º bloco; a rede começa em ${octs(r.net)[k]}.`:`Com /${c}, os ${c/8} primeiros blocos são a rede.`;
+  if(kind==='rede')return base+` Rede: ${toStr(r.net)}.`;
+  if(kind==='broadcast')return base+` Broadcast: ${toStr(r.bc)} (o último antes da próxima rede).`;
+  const ro=info(cur.other,c);return `Rede de A: ${toStr(r.net)} · rede de B: ${toStr(ro.net)}. ${r.net===ro.net?'Iguais: mesma rede.':'Diferentes: precisam do roteador.'}`;
+}
+$('qForm').addEventListener('submit',e=>{e.preventDefault();if(!cur||!$('ans').value.trim())return;const ok=cur.check($('ans').value);score.total++;if(ok)score.ok++;try{localStorage.setItem('mascara-score',JSON.stringify(score))}catch(err){}
+  $('score').textContent=`${score.ok} de ${score.total}`;$('fb').className='fb show '+(ok?'ok':'err');$('fb').innerHTML=`<b>${ok?'Certo!':'Ainda não. Resposta: '+cur.ans}</b><br>${explain()}`;});
+$('next').addEventListener('click',newQ);
+$('score').textContent=`${score.ok} de ${score.total}`;
+
+/* ---------- Abas ---------- */
+const tabs=['calcular','mesma-rede','dividir','desafio'];
+function route(){const h=location.hash.slice(1);const t=tabs.includes(h)?h:'calcular';tabs.forEach(x=>$(x).hidden=x!==t);document.querySelectorAll('#tabs a').forEach(a=>a.toggleAttribute('aria-current',a.getAttribute('href')==='#'+t));if(t==='calcular')a11y('page');}
+function a11y(){document.querySelectorAll('#tabs a[aria-current]').forEach(a=>a.setAttribute('aria-current','page'))}
+window.addEventListener('hashchange',()=>{route();a11y()});
+route();a11y();calc();same();divide();newQ();
+}
+</script>
+</body>
+</html>

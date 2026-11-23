@@ -17,13 +17,14 @@ import { Pratica1 } from './Pratica1';
 import { SitesTab } from './SitesTab';
 import { Terminal, TerminalHandle, TermLine, expandLines } from './Terminal';
 import { VmTab } from './VmTab';
+import { Mascara } from './mascara/Mascara';
 import { faultsOf, useSessionState } from './useSessionState';
 import { scoreByPart } from './praticaDefs';
 
 const COMMAND_NAMES = ['ipconfig', 'ping', 'tracert', 'nslookup', 'arp', 'route', 'netstat', 'hostname', 'getmac', 'cls', 'help', 'curl', 'navegar', 'site'];
 
 interface Toast { id: number; text: string; }
-type Tab = 'pratica' | 'sites' | 'vm';
+type Tab = 'pratica' | 'sites' | 'vm' | 'mascara';
 
 export function StudentApp({ sid, me }: { sid: string; me: Host }) {
   const state = useSessionState(sid, me.uid);
@@ -237,7 +238,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
         <a href="#/ajuda" target="_blank" style={{ marginLeft: 'auto', fontSize: 13 }}>Ajuda</a>
       </div>
 
-      <div className="student-body">
+      <div className={'student-body' + (tab === 'mascara' ? ' wide-side' : '')}>
         <div className="term-pane">
           <div className="shortcut-bar">
             {SHORTCUT_COMMANDS.map((c) => (
@@ -263,8 +264,9 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
             <button className={tab === 'pratica' ? 'active' : ''} onClick={() => setTab('pratica')}>Prática 1</button>
             <button className={tab === 'sites' ? 'active' : ''} onClick={() => setTab('sites')}>Sites da turma</button>
             <button className={tab === 'vm' ? 'active' : ''} onClick={() => setTab('vm')}>VirtualBox</button>
+            <button className={tab === 'mascara' ? 'active' : ''} onClick={() => setTab('mascara')}>Máscara</button>
           </div>
-          <div className="tab-content">
+          <div className={'tab-content' + (tab === 'mascara' ? ' flush' : '')}>
             {tab === 'pratica' && (
               <Pratica1
                 me={me}
@@ -304,6 +306,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
               </>
             )}
             {tab === 'vm' && <VmTab me={me} onChecklist={setChecklistItem} />}
+            {tab === 'mascara' && <Mascara />}
           </div>
         </div>
       </div>
