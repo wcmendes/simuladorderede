@@ -30,7 +30,8 @@ import {
 import { NO_FAULTS } from '../sim/types';
 import type { Faults, Host, NetMode, Site, SimEvent, SimEventDraft } from '../sim/types';
 import type { Nivel, Tipo } from '../sim/mascara';
-import { normalizarScore, type Score } from '../sim/ranking';
+import { normalizarScore, porTipoVazio, type Score } from '../sim/ranking';
+import type { AulaDiagDoc, AulaScore, RespostaAoVivo } from '../sim/aula';
 import type { RespostaQuiz } from '../sim/quiz';
 import type { Falha, RespostaDiag } from '../sim/diag';
 
@@ -50,6 +51,7 @@ export interface SessionDoc {
   rodada?: RodadaDoc;
   rankingEpoch?: number; // muda quando o professor zera o ranking
   diag?: { ativo: boolean; rodada: number }; // desafio de diagnóstico (a falha em si não é gravada aqui)
+  aulaDiag?: AulaDiagDoc; // "Defeito para todos" da aba Sem internet? da Aula interativa
 }
 
 const sessionsCol = collection(db, 'sessions');
@@ -250,18 +252,49 @@ export interface ScoreDoc extends Score {
   uid: string;
   name: string;
   updatedAt: number;
+  /** Placar da Aula interativa (portas, diagnóstico, nuvem), quando o aluno já usou as abas. */
+  aula: Partial<AulaScore>;
+  /** Última resposta do aluno no "Defeito para todos". */
+  aoVivo?: RespostaAoVivo;
 }
 
 /** Uma gravação por resposta do aluno (nunca em loop). */
 export async function saveScore(sid: string, uid: string, name: string, score: Score): Promise<void> {
-  await setDoc(doc(scoresCol(sid), uid), {
-    name: name.slice(0, 80),
-    ok: score.ok,
-    total: score.total,
-    streak: score.streak,
-    byKind: score.byKind,
-    updatedAt: Date.now(),
-  });
+  // merge: não apaga os campos da Aula interativa (portas, diagnostico, nuvem) gravados no mesmo documento.
+  await setDoc(
+    doc(scoresCol(sid), uid),
+    {
+      name: name.slice(0, 80),
+      ok: score.ok,
+      total: score.total,
+      streak: score.streak,
+      byKind: score.byKind,
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  );
+}
+
+/**
+ * Placar da Aula interativa, no mesmo documento do ranking (sessions/{sid}/scores/{uid}).
+ * Uma gravação por resposta. Se o aluno ainda não jogou o Desafio, cria o documento com os
+ * campos que as regras exigem (ok/total/streak zerados), sem mexer no placar da máscara.
+ */
+export async function saveAula(sid: string, uid: string, name: string, score: AulaScore, aoVivo?: RespostaAoVivo): Promise<void> {
+  const ref = doc(scoresCol(sid), uid);
+  const existe = (await getDoc(ref)).exists();
+  const base = existe ? {} : { name: name.slice(0, 80), ok: 0, total: 0, streak: 0, byKind: porTipoVazio(), updatedAt: Date.now() };
+  await setDoc(
+    ref,
+    {
+      ...base,
+      portas: score.portas,
+      nuvem: score.nuvem,
+      diagnostico: score.diagnostico,
+      ...(aoVivo ? { aoVivo } : {}),
+    },
+    { merge: true },
+  );
 }
 
 export function watchScores(sid: string, cb: (scores: ScoreDoc[]) => void): Unsubscribe {
@@ -269,10 +302,22 @@ export function watchScores(sid: string, cb: (scores: ScoreDoc[]) => void): Unsu
     cb(
       snap.docs.map((d) => {
         const data = d.data() as Partial<ScoreDoc>;
-        return { ...normalizarScore(data), uid: d.id, name: data.name ?? 'Aluno', updatedAt: data.updatedAt ?? 0 };
+        const raw = d.data() as { portas?: AulaScore['portas']; nuvem?: AulaScore['nuvem']; diagnostico?: AulaScore['diagnostico']; aoVivo?: RespostaAoVivo };
+        return {
+          ...normalizarScore(data),
+          uid: d.id,
+          name: data.name ?? 'Aluno',
+          updatedAt: data.updatedAt ?? 0,
+          aula: { portas: raw.portas, nuvem: raw.nuvem, diagnostico: raw.diagnostico },
+          aoVivo: raw.aoVivo,
+        };
       }),
     );
   });
+}
+
+export async function setAulaDiag(sid: string, aulaDiag: AulaDiagDoc): Promise<void> {
+  await updateDoc(sessionRef(sid), { aulaDiag });
 }
 
 export async function setRodada(sid: string, rodada: RodadaDoc): Promise<void> {

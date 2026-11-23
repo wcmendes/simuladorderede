@@ -169,7 +169,7 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
         <button className={aba === 'diag' ? 'active' : ''} onClick={() => setAba('diag')}>Diagnóstico</button>
       </div>
 
-      {aba === 'ranking' && <RankingTab sid={sid} rodada={state.session?.rodada} />}
+      {aba === 'ranking' && <RankingTab sid={sid} rodada={state.session?.rodada} aulaDiag={state.session?.aulaDiag} online={state.onlineHosts.length} />}
       {aba === 'diag' && <DiagTab sid={sid} session={state.session} hosts={state.hosts} online={state.onlineHosts.length} />}
       {aba === 'quiz' && <QuizTab sid={sid} hosts={state.hosts} online={state.onlineHosts.length} />}
 

@@ -38,11 +38,11 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 'A2', part: 'A', title: 'A2 — ping', command: 'ping 8.8.8.8',
-    tip: 'Rode também "ping www.edufor.edu.br" para achar o IP dele.',
+    tip: 'Rode também "ping www.exemplo.com.br" para achar o IP dele.',
     fields: [
       { key: 'A2_avg', label: 'Tempo médio do ping a 8.8.8.8 (ms)' },
       { key: 'A2_lost', label: 'Pacotes perdidos' },
-      { key: 'A2_eduforip', label: 'IP de www.edufor.edu.br' },
+      { key: 'A2_siteip', label: 'IP de www.exemplo.com.br' },
       { key: 'A2_service', label: 'Se o ping por nome falha mas por IP funciona, qual serviço está com problema?' },
     ],
   },
@@ -56,7 +56,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 'A4', part: 'A', title: 'A4 — nslookup www.edufor.edu.br', command: 'nslookup www.edufor.edu.br',
+    id: 'A4', part: 'A', title: 'A4 — nslookup www.exemplo.com.br', command: 'nslookup www.exemplo.com.br',
     tip: "Veja o 'Servidor' que respondeu e o 'Address' retornado.",
     fields: [
       { key: 'A4_server', label: 'Servidor DNS que respondeu' },
@@ -161,7 +161,7 @@ export function checkField(key: string, value: string, me: Host, arpPairs: Array
     case 'A1_ipv6': return matchText(value, 'sim');
     case 'A1_dhcp': return matchText(value, 'sim');
     // A2
-    case 'A2_eduforip': return matchIp(value, INTERNET_SITES['www.edufor.edu.br'].ip);
+    case 'A2_siteip': return matchIp(value, INTERNET_SITES['www.exemplo.com.br'].ip);
     case 'A2_service': return matchText(value, 'dns');
     case 'A2_lost': return matchNumber(value, 0);
     case 'A2_avg': return matchNumber(value, 15, 40); // tempo varia; tolerância larga
@@ -170,8 +170,8 @@ export function checkField(key: string, value: string, me: Host, arpPairs: Array
     case 'A3_isgw': return matchText(value, 'sim');
     case 'A3_hops': return matchNumber(value, 5, 1); // internet: ~5-6 saltos
     // A4
-    case 'A4_server': return norm(value).includes('dns.lab.edufor') || norm(value).includes('172.16.0.2');
-    case 'A4_ip': return matchIp(value, INTERNET_SITES['www.edufor.edu.br'].ip);
+    case 'A4_server': return norm(value).includes('dns.lab.local') || norm(value).includes('172.16.0.2');
+    case 'A4_ip': return matchIp(value, INTERNET_SITES['www.exemplo.com.br'].ip);
     // A5
     case 'A5_ip1':
     case 'A5_ip2': return arpPairs.some((p) => matchIp(value, p.ip));

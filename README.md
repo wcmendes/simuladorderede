@@ -1,6 +1,6 @@
 # 🖧 LabRedes — Rede simulada da turma
 
-Simulador de rede **multiplayer** para a disciplina de **Redes de Computadores** (curso de ADS). Cada aluno abre um link no navegador e vira um "computador" de uma rede compartilhada pela turma inteira. Os alunos digitam comandos de rede num terminal falso, pingam colegas, publicam sites fictícios e os descobrem por DNS — e o professor liga e desliga falhas (DNS fora, provedor caído, gateway de sub-rede fora, perda de pacotes) em tempo real, para criar exercícios de diagnóstico.
+Simulador de rede **multiplayer** para a disciplina de **Redes de Computadores**. Cada aluno abre um link no navegador e vira um "computador" de uma rede compartilhada pela turma inteira. Os alunos digitam comandos de rede num terminal falso, pingam colegas, publicam sites fictícios e os descobrem por DNS — e o professor liga e desliga falhas (DNS fora, provedor caído, gateway de sub-rede fora, perda de pacotes) em tempo real, para criar exercícios de diagnóstico.
 
 Feito com **Vite + React + TypeScript**, com o motor da simulação em TypeScript puro e testado (Vitest). Usa **Firebase Firestore** para o estado ao vivo, **Firebase Hosting** para publicar e **Auth anônimo** (um documento por navegador, sem cadastro).
 
@@ -9,6 +9,11 @@ Feito com **Vite + React + TypeScript**, com o motor da simulação em TypeScrip
 - 👩‍🏫 **Professor:** https://simuladorderede.web.app/professor
 - 📱 **Aluno:** https://simuladorderede.web.app
 - 🧮 **Máscara de rede (estudo sozinho, sem sessão):** https://simuladorderede.web.app/mascara
+- 🎓 **Aula interativa (sem sessão):** https://simuladorderede.web.app/aula
+  - TCP × UDP: https://simuladorderede.web.app/aula#tcp-udp
+  - Portas: https://simuladorderede.web.app/aula#portas
+  - Sem internet? (diagnóstico): https://simuladorderede.web.app/aula#diagnostico
+  - Nuvem: https://simuladorderede.web.app/aula#nuvem
 - ❓ **Ajuda:** https://simuladorderede.web.app/ajuda
 
 Os endereços funcionam com ou sem `#` (`/professor` e `#/professor` abrem o mesmo painel).
@@ -37,6 +42,21 @@ Acompanha a Prática 1 (diagnóstico de rede no Windows, endereçamento IP e cri
 Ferramenta "Máscara de rede, bit a bit", com 4 sub-abas: **Calcular** (32 bits coloridos, passo a passo e régua de blocos), **Mesma rede?** (destaca o primeiro bit de rede diferente), **Dividir em sub-redes** (2, 4, 8 ou 16) e **Desafio** (perguntas aleatórias com correção pelo truque do salto). Azul = rede, laranja = host, vermelho = destaque.
 
 Dentro de uma sessão ela é a aba **Máscara** da tela do aluno. Fora de sessão, o aluno estuda em casa em `/mascara`, sem login. Nesse modo o placar fica só no navegador dele.
+
+## 🎓 Aula interativa (TCP × UDP, Portas, Sem internet?, Nuvem)
+
+Quatro abas para a aula online. Cada aba tem o seu link, para colar direto no chat do Meet (links acima). Funciona sem sessão e sem login em `/aula`; dentro de uma sessão é a aba **Aula interativa** da tela do aluno. Funciona no celular.
+
+- **TCP × UDP** (`/aula#tcp-udp`): ajuste a perda de pacotes (0 a 40%) e clique em **Enviar 10 pacotes**. Peça que a turma compare as duas pistas com 0% e depois com 40%: o TCP faz o aperto de mão, espera cada ACK e reenvia o perdido; o UDP sai em rajada e deixa buracos vermelhos.
+- **Portas** (`/aula#portas`): encaixe SSH 22, DNS 53, HTTP 80, HTTPS 443, FTP 21 e SMTP 25. No computador, arraste; no celular, toque no serviço e depois na porta. Acertou: a porta fica verde com o protocolo e a função. Errou: ela balança.
+- **Sem internet?** (`/aula#diagnostico`): um PC com defeito escondido (cabo/placa, gateway, provedor ou DNS). Os alunos rodam os comandos, de baixo para cima, e escolhem o defeito. Ganha o "Diagnóstico de profissional!" quem acerta com 3 comandos ou menos.
+- **Nuvem** (`/aula#nuvem`): classificar 10 serviços em IaaS, PaaS ou SaaS, com a analogia da pizza.
+
+**Ranking e diagnóstico ao vivo (dentro da sessão).** Cada resposta de Portas, Sem internet? e Nuvem grava o placar do aluno no mesmo documento do ranking (`sessions/{sid}/scores/{uid}`, campos `portas`, `diagnostico` com a média de comandos, e `nuvem`). Na aba **Ranking** do painel do professor:
+
+1. Os acertos da aula somam no ranking (coluna **Aula**).
+2. Aparecem o percentual de acerto por atividade, a média de comandos e qual defeito a turma mais erra.
+3. **Defeito para todos** sorteia o mesmo defeito para todos os alunos. Quando todos os alunos online respondem, ou quando você clica em **Revelar**, a turma vê o defeito certo, quantos acertaram e a média de comandos. **Encerrar** devolve a aba ao modo livre.
 
 ## 🏆 Ranking do Desafio em aula
 
@@ -91,6 +111,8 @@ Na aba **Diagnóstico** do painel, **Sortear falha e iniciar** liga uma falha es
 | `src/sim/ranking.ts` | Placar do Desafio e agregações do professor. |
 | `src/sim/quiz.ts`, `quizPronto.ts` | Leitura das perguntas coladas, pontuação do quiz e o conjunto "Revisão Redes 2026.2". |
 | `src/sim/diag.ts` | Falhas do desafio de diagnóstico, comandos permitidos e ranking. |
+| `src/sim/aula.ts` | Portas, saídas dos comandos por defeito, serviços de nuvem e placar da Aula interativa. |
+| `src/ui/aula/` | Abas da Aula interativa (porte do protótipo `prototipo-aula-interativa.html`). |
 | `src/ui/mascara/` | Aba Máscara (porte do protótipo em `docs/prototipo-mascara.html`). |
 | `src/ui/prof/` | Abas do professor: Ranking, Quiz, Diagnóstico e modo projetor. |
 | `src/sim/*.test.ts` | Testes do motor (Vitest). |
@@ -141,7 +163,7 @@ npm run deploy:hosting        # só o front-end (mais rápido)
 
 ```bash
 npm run dev        # servidor local
-npm run test       # testes do motor de simulação (Vitest, 79 testes)
+npm run test       # testes do motor de simulação (Vitest)
 npm run typecheck  # checagem de tipos
 npm run build      # build de produção
 ```

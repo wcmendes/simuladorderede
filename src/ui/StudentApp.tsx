@@ -5,6 +5,7 @@ import {
   createSite,
   removeSite,
   saveAnswers,
+  saveAula,
   saveScore,
   updateSite,
   watchAnswers,
@@ -22,13 +23,14 @@ import { SitesTab } from './SitesTab';
 import { Terminal, TerminalHandle, TermLine, expandLines } from './Terminal';
 import { VmTab } from './VmTab';
 import { Mascara } from './mascara/Mascara';
+import { Aula } from './aula/Aula';
 import { faultsOf, useSessionState } from './useSessionState';
 import { scoreByPart } from './praticaDefs';
 
 const COMMAND_NAMES = ['ipconfig', 'ping', 'tracert', 'nslookup', 'arp', 'route', 'netstat', 'hostname', 'getmac', 'cls', 'help', 'curl', 'navegar', 'site'];
 
 interface Toast { id: number; text: string; }
-type Tab = 'pratica' | 'sites' | 'vm' | 'mascara';
+type Tab = 'pratica' | 'sites' | 'vm' | 'mascara' | 'aula';
 
 export function StudentApp({ sid, me }: { sid: string; me: Host }) {
   const state = useSessionState(sid, me.uid);
@@ -265,7 +267,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
         <a href="#/ajuda" target="_blank" style={{ marginLeft: 'auto', fontSize: 13 }}>Ajuda</a>
       </div>
 
-      <div className={'student-body' + (tab === 'mascara' ? ' wide-side' : '')}>
+      <div className={'student-body' + (tab === 'mascara' || tab === 'aula' ? ' wide-side' : '')}>
         <div className="term-pane">
           <DiagBanner d={diag} />
           <div className="shortcut-bar">
@@ -293,8 +295,9 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
             <button className={tab === 'sites' ? 'active' : ''} onClick={() => setTab('sites')}>Sites da turma</button>
             <button className={tab === 'vm' ? 'active' : ''} onClick={() => setTab('vm')}>VirtualBox</button>
             <button className={tab === 'mascara' ? 'active' : ''} onClick={() => setTab('mascara')}>Máscara</button>
+            <button className={tab === 'aula' ? 'active' : ''} onClick={() => setTab('aula')}>Aula interativa</button>
           </div>
-          <div className={'tab-content' + (tab === 'mascara' ? ' flush' : '')}>
+          <div className={'tab-content' + (tab === 'mascara' || tab === 'aula' ? ' flush' : '')}>
             {tab === 'pratica' && (
               <Pratica1
                 me={me}
@@ -334,6 +337,17 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
               </>
             )}
             {tab === 'vm' && <VmTab me={me} onChecklist={setChecklistItem} />}
+            <div hidden={tab !== 'aula'}>
+              <Aula
+                sessao={{
+                  sid,
+                  uid: me.uid,
+                  epoch: state.session?.rankingEpoch,
+                  aulaDiag: state.session?.aulaDiag,
+                  salvar: (score, aoVivo) => saveAula(sid, me.uid, me.name, score, aoVivo),
+                }}
+              />
+            </div>
             {tab === 'mascara' && (
               <Mascara
                 sessao={{

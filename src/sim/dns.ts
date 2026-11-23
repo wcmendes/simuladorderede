@@ -8,7 +8,7 @@ export interface Resolved {
   kind: 'pc' | 'site' | 'internet' | 'dns';
 }
 
-const DNS_SELF = { ip: '172.16.0.2', fqdn: 'dns.lab.edufor', kind: 'dns' as const };
+const DNS_SELF = { ip: '172.16.0.2', fqdn: 'dns.lab.local', kind: 'dns' as const };
 
 /** Normaliza um alvo: adiciona .turma.lab quando apropriado. */
 export function resolveName(ctx: SimContext, raw: string): Resolved | null {
@@ -19,7 +19,7 @@ export function resolveName(ctx: SimContext, raw: string): Resolved | null {
   if (INTERNET_SITES[q]) {
     return { ip: INTERNET_SITES[q].ip, fqdn: q, kind: 'internet' };
   }
-  if (q === 'dns.lab.edufor') return DNS_SELF;
+  if (q === 'dns.lab.local') return DNS_SELF;
 
   const short = q.endsWith('.' + DOMAIN) ? q.slice(0, -(DOMAIN.length + 1)) : q;
 

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { setRodada, watchScores, zerarRanking, type RodadaDoc, type ScoreDoc } from '../../firebase/data';
 import { ROTULO_NIVEL, ROTULO_TIPO, TIPOS, type Nivel, type Tipo } from '../../sim/mascara';
 import { ordenarRanking, percentualPorTipo } from '../../sim/ranking';
+import { acertosAula, normalizarAula, type AulaDiagDoc } from '../../sim/aula';
+import { AulaAoVivo } from './AulaAoVivo';
 import { Projetor } from './Projetor';
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
@@ -10,9 +12,11 @@ const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um :
 interface Props {
   sid: string;
   rodada?: RodadaDoc;
+  aulaDiag?: AulaDiagDoc;
+  online?: number;
 }
 
-export function RankingTab({ sid, rodada }: Props) {
+export function RankingTab({ sid, rodada, aulaDiag, online = 0 }: Props) {
   const [scores, setScores] = useState<ScoreDoc[]>([]);
   const [projetor, setProjetor] = useState(false);
   const [tipo, setTipo] = useState<Tipo | 'todos'>(rodada?.tipo ?? 'todos');
@@ -21,7 +25,18 @@ export function RankingTab({ sid, rodada }: Props) {
 
   useEffect(() => watchScores(sid, setScores), [sid]);
 
-  const ordenado = useMemo(() => ordenarRanking(scores), [scores]);
+  // Ranking = Desafio da máscara + acertos da Aula interativa (portas, diagnóstico, nuvem).
+  const ordenado = useMemo(
+    () =>
+      ordenarRanking(
+        scores.map((s) => {
+          const a = normalizarAula(s.aula);
+          const tentativas = a.portas.total + a.diagnostico.total + a.nuvem.total;
+          return { ...s, ok: s.ok + acertosAula(s.aula), total: s.total + tentativas, aulaOk: acertosAula(s.aula) };
+        }),
+      ),
+    [scores],
+  );
   const pct = useMemo(() => percentualPorTipo(scores), [scores]);
   const ativa = !!rodada?.ativa;
 
@@ -86,6 +101,8 @@ export function RankingTab({ sid, rodada }: Props) {
             <div className="barra"><div style={{ width: `${pct[t].pct ?? 0}%` }} /></div>
           </div>
         ))}
+
+        <AulaAoVivo sid={sid} scores={scores} online={online} aulaDiag={aulaDiag} />
       </div>
 
       <div className="prof-section">
@@ -96,7 +113,7 @@ export function RankingTab({ sid, rodada }: Props) {
         </div>
         {ordenado.length === 0 && <p style={{ color: 'var(--muted)' }}>Ninguém respondeu ainda.</p>}
         <table className="students">
-          <thead><tr><th>#</th><th>Aluno</th><th>Acertos</th><th>Tentativas</th><th>%</th><th>Seq.</th></tr></thead>
+          <thead><tr><th>#</th><th>Aluno</th><th>Acertos</th><th>Tentativas</th><th>%</th><th>Aula</th><th>Seq.</th></tr></thead>
           <tbody>
             {ordenado.map((s, i) => (
               <tr key={s.uid}>
@@ -105,6 +122,7 @@ export function RankingTab({ sid, rodada }: Props) {
                 <td><b>{s.ok}</b></td>
                 <td>{s.total}</td>
                 <td>{s.total ? Math.round((s.ok / s.total) * 100) : 0}%</td>
+                <td>{s.aulaOk}</td>
                 <td>{s.streak >= 2 ? `🔥 ${s.streak}` : s.streak}</td>
               </tr>
             ))}

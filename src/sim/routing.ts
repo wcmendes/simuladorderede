@@ -1,7 +1,7 @@
 // Caminhos de rede (saltos) usados por tracert e pelo TTL do ping.
 import {
   BACKBONE_IP,
-  CAMPUS_IP,
+  LAB_IP,
   DNS_IP,
   INTERNET_IPS,
   PROVIDER_IP,
@@ -30,7 +30,7 @@ function destKind(ctx: SimContext, destIp: string): 'self' | 'lab-same' | 'lab-o
   if (destIp === me.ip) return 'self';
   if (destIp === DNS_IP) return 'dns';
   if (INTERNET_IPS.has(destIp)) return 'internet';
-  if (destIp === CAMPUS_IP || destIp === PROVIDER_IP || destIp === BACKBONE_IP || destIp === me.gateway) return 'router';
+  if (destIp === LAB_IP || destIp === PROVIDER_IP || destIp === BACKBONE_IP || destIp === me.gateway) return 'router';
 
   const peer = hostByIp(ctx, destIp);
   if (peer) {
@@ -49,14 +49,14 @@ function gatewayIsDown(faults: Faults, subnetIndex: number): boolean {
 
 function routerLabel(ip: string): string {
   switch (ip) {
-    case CAMPUS_IP:
-      return 'RT-CAMPUS';
+    case LAB_IP:
+      return 'RT-LAB';
     case PROVIDER_IP:
       return 'RT-PROVEDOR';
     case BACKBONE_IP:
       return 'RT-BACKBONE';
     case DNS_IP:
-      return 'dns.lab.edufor';
+      return 'dns.lab.local';
     default:
       return '';
   }
@@ -112,15 +112,15 @@ export function computePath(ctx: SimContext, destIp: string): PathResult {
     return { hops: [{ ip: gw, label: 'RT-LAB' }], reachable: true, destTtlBase: 128 };
   }
 
-  // Daqui: precisa subir para o RT-CAMPUS.
-  hops.push({ ip: CAMPUS_IP, label: 'RT-CAMPUS' });
+  // Daqui: precisa subir para o RT-LAB.
+  hops.push({ ip: LAB_IP, label: 'RT-LAB' });
 
   if (kind === 'dns') {
-    hops.push({ ip: DNS_IP, label: 'dns.lab.edufor' });
+    hops.push({ ip: DNS_IP, label: 'dns.lab.local' });
     return { hops, reachable: true, destTtlBase: 64 };
   }
 
-  if (kind === 'router' && destIp === CAMPUS_IP) {
+  if (kind === 'router' && destIp === LAB_IP) {
     return { hops, reachable: true, destTtlBase: 128 };
   }
 
@@ -151,7 +151,7 @@ function internetLabel(ip: string): string {
   // Procura o nome do site da internet pelo IP.
   // Import tardio evita ciclo; usamos a tabela direto.
   const sites: Record<string, string> = {
-    '200.150.20.10': 'www.edufor.edu.br',
+    '200.150.20.10': 'www.exemplo.com.br',
     '142.250.79.36': 'www.google.com',
     '8.8.8.8': 'dns.google',
     '161.148.164.31': 'www.gov.br',

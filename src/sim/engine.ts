@@ -331,7 +331,7 @@ function tracert(ctx: SimContext, args: string[]): Result {
 function nslookup(ctx: SimContext, args: string[]): Result {
   const target = args[0];
   if (!target) {
-    return { ...empty(), lines: [hint('Uso: nslookup <nome ou IP>. Exemplo: nslookup www.edufor.edu.br')] };
+    return { ...empty(), lines: [hint('Uso: nslookup <nome ou IP>. Exemplo: nslookup www.exemplo.com.br')] };
   }
 
   if (ctx.faults.dnsDown || ctx.faults.cableDown) {
@@ -486,7 +486,7 @@ function fakeGuid(ctx: SimContext): string {
 function curl(ctx: SimContext, args: string[], browse: boolean): Result {
   const target = args.filter((a) => !a.startsWith('-'))[0];
   if (!target) {
-    const ex = browse ? 'navegar www.edufor.edu.br' : 'curl www.edufor.edu.br';
+    const ex = browse ? 'navegar www.exemplo.com.br' : 'curl www.exemplo.com.br';
     return { ...empty(), lines: [hint(`Uso: ${browse ? 'navegar' : 'curl'} <IP ou nome>. Exemplo: ${ex}`)] };
   }
 

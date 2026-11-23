@@ -55,7 +55,7 @@ describe('cada falha é distinguível só com ping, nslookup, tracert e ipconfig
     expect(tr).not.toContain('10.0.0.1');
   });
 
-  it('Provedor: DNS responde, rede do campus alcança, internet não, tracert para em 10.0.0.1', () => {
+  it('Provedor: DNS responde, rede do laboratório alcança, internet não, tracert para em 10.0.0.1', () => {
     const c = ctxCom(aplicarFalha('provedor', 2));
     const ns = texto(runCommand(c, 'nslookup www.google.com'));
     expect(ns).toContain('142.250.79.36');
@@ -103,7 +103,7 @@ describe('comandos do desafio', () => {
     expect(classificarComando('cls')).toBe('livre');
     expect(classificarComando('arp -a')).toBe('bloqueado');
     expect(classificarComando('netstat -an')).toBe('bloqueado');
-    expect(classificarComando('curl www.edufor.edu.br')).toBe('bloqueado');
+    expect(classificarComando('curl www.exemplo.com.br')).toBe('bloqueado');
     expect(classificarComando('   ')).toBe('vazio');
   });
 });

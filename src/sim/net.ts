@@ -3,8 +3,8 @@ import type { NetMode } from './types';
 
 export const LAB_BASE = '192.168.10.0';
 export const DNS_IP = '172.16.0.2';
-export const DNS_NAME = 'dns.lab.edufor';
-export const CAMPUS_IP = '10.0.0.1';
+export const DNS_NAME = 'dns.lab.local';
+export const LAB_IP = '10.0.0.1';
 export const LAB_UPLINK_IP = '10.0.0.2';
 export const PROVIDER_IP = '200.150.10.1';
 export const BACKBONE_IP = '187.16.216.1';
@@ -13,7 +13,7 @@ export const RT_MAC = '00-1a-2b-3c-4d-5e';
 export const ONLINE_WINDOW_MS = 2 * 60 * 1000;
 
 export const INTERNET_SITES: Record<string, { ip: string; title: string; body: string }> = {
-  'www.edufor.edu.br': { ip: '200.150.20.10', title: 'Faculdade EDUFOR', body: 'Bem-vindo ao portal da Faculdade EDUFOR, em São Luís/MA.' },
+  'www.exemplo.com.br': { ip: '200.150.20.10', title: 'Site de exemplo', body: 'Bem-vindo ao site de exemplo da rede do laboratório.' },
   'www.google.com': { ip: '142.250.79.36', title: 'Google', body: 'Pesquisar na web.' },
   'dns.google': { ip: '8.8.8.8', title: 'Google Public DNS', body: 'Servidor DNS público do Google.' },
   'www.gov.br': { ip: '161.148.164.31', title: 'Portal gov.br', body: 'Portal do Governo Federal.' },
