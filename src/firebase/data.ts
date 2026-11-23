@@ -31,6 +31,7 @@ import { NO_FAULTS } from '../sim/types';
 import type { Faults, Host, NetMode, Site, SimEvent, SimEventDraft } from '../sim/types';
 import type { Nivel, Tipo } from '../sim/mascara';
 import { normalizarScore, type Score } from '../sim/ranking';
+import type { RespostaQuiz } from '../sim/quiz';
 
 /** Rodada do Desafio: restringe o tipo e a dificuldade das perguntas de toda a turma. */
 export interface RodadaDoc {
@@ -290,6 +291,52 @@ async function apagarColecao(col: ReturnType<typeof collection>): Promise<void> 
     snap.docs.slice(i, i + 450).forEach((d) => batch.delete(d.ref));
     await batch.commit();
   }
+}
+
+// --- Quiz ao vivo ---
+// quiz/state: único documento que o aluno escuta. As respostas ficam em quizAnswers/{q}_{uid}
+// (só o professor lê a coleção inteira e agrega).
+
+export interface QuizStateDoc {
+  active: boolean;
+  questionIndex: number;
+  total: number;
+  startedAt: number;
+  durationMs: number;
+  revealed: boolean;
+  question: { texto: string; opcoes: string[] };
+  correct?: number; // só depois de revelar
+  counts?: number[]; // só depois de revelar
+}
+
+const quizStateRef = (sid: string) => doc(db, 'sessions', sid, 'quiz', 'state');
+const quizAnswersCol = (sid: string) => collection(db, 'sessions', sid, 'quizAnswers');
+
+export function watchQuizState(sid: string, cb: (s: QuizStateDoc | null) => void): Unsubscribe {
+  return onSnapshot(quizStateRef(sid), (snap) => cb(snap.exists() ? (snap.data() as QuizStateDoc) : null));
+}
+
+export async function setQuizState(sid: string, state: QuizStateDoc): Promise<void> {
+  await setDoc(quizStateRef(sid), state);
+}
+
+/** O id fixo (pergunta_uid) com regra "só criar" impede responder duas vezes. */
+export async function answerQuiz(sid: string, q: number, uid: string, choice: number, ms: number): Promise<void> {
+  await setDoc(doc(quizAnswersCol(sid), `${q}_${uid}`), { uid, q, choice, ms });
+}
+
+export async function getQuizAnswer(sid: string, q: number, uid: string): Promise<{ choice: number; ms: number } | null> {
+  const snap = await getDoc(doc(quizAnswersCol(sid), `${q}_${uid}`));
+  return snap.exists() ? (snap.data() as { choice: number; ms: number }) : null;
+}
+
+export function watchQuizAnswers(sid: string, cb: (r: RespostaQuiz[]) => void): Unsubscribe {
+  return onSnapshot(quizAnswersCol(sid), (snap) => cb(snap.docs.map((d) => d.data() as RespostaQuiz)));
+}
+
+export async function reiniciarQuiz(sid: string): Promise<void> {
+  await apagarColecao(quizAnswersCol(sid));
+  await deleteDoc(quizStateRef(sid)).catch(() => {});
 }
 
 // --- Moderação / encerramento ---

@@ -248,3 +248,25 @@ table.students th { color: var(--muted); }
 .proj li.p2 .pos, .proj li.p2 .valor { color: #cfd6df; }
 .proj li.p3 .pos, .proj li.p3 .valor { color: #e29a5b; }
 @media (max-width: 760px) { .prof-grid { grid-template-columns: 1fr; } }
+
+/* Quiz ao vivo */
+.quiz-texto { width: 100%; font-family: var(--term-font); font-size: 14px; resize: vertical; }
+.quiz-aluno { position: fixed; inset: 0; z-index: 250; background: #0b1016; color: #fff; display: flex; flex-direction: column; padding: 3vh 4vw; overflow-y: auto; }
+.quiz-topo { display: flex; justify-content: space-between; color: var(--muted); font-size: 18px; font-weight: 600; }
+.quiz-tempo { font-size: 32px; font-weight: 800; color: #fff; }
+.quiz-tempo.fim { color: var(--err); }
+.quiz-pergunta { font-size: clamp(24px, 4vw, 48px); line-height: 1.2; margin: 2vh 0 3vh; }
+.quiz-opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; flex: 1; align-content: start; }
+.quiz-opcao { position: relative; display: flex; align-items: center; gap: 14px; min-height: 12vh; padding: 16px 20px; border: 4px solid transparent; border-radius: 12px; color: #fff; font-size: clamp(18px, 2.6vw, 30px); font-weight: 700; text-align: left; overflow: hidden; }
+.quiz-opcao:disabled { cursor: default; }
+.quiz-opcao.minha { border-color: #fff; }
+.quiz-opcao.errada { opacity: 0.35; }
+.quiz-opcao.certa { border-color: #fff; box-shadow: 0 0 0 4px var(--ok); }
+.quiz-opcao .forma { font-size: 1.3em; opacity: 0.9; }
+.quiz-opcao .texto { flex: 1; }
+.quiz-opcao .barra-q { position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: rgba(0,0,0,0.3); }
+.quiz-opcao .barra-q > span { display: block; height: 100%; background: rgba(255,255,255,0.85); }
+.quiz-opcao .barra-q b { position: absolute; right: 12px; bottom: 12px; font-size: 22px; }
+.quiz-rodape { text-align: center; font-size: 22px; padding: 2vh 0 0; min-height: 8vh; }
+.quiz-rodape .ok { color: #5be584; } .quiz-rodape .err { color: #ff7b72; }
+@media (max-width: 600px) { .quiz-opcoes { grid-template-columns: 1fr; } .quiz-opcao { min-height: 9vh; } }

@@ -15,6 +15,7 @@ import { gatewayList } from '../sim/net';
 import type { Faults, NetMode, SimEvent } from '../sim/types';
 import { Footer } from './Footer';
 import { RankingTab } from './prof/RankingTab';
+import { QuizTab } from './prof/QuizTab';
 import { QrCode } from './QrCode';
 import { faultsOf, useSessionState } from './useSessionState';
 
@@ -99,7 +100,7 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
   const [feed, setFeed] = useState<SimEvent[]>([]);
   const [answers, setAnswers] = useState<Record<string, AnswersDoc>>({});
   const [showQr, setShowQr] = useState(true);
-  const [aba, setAba] = useState<'painel' | 'ranking'>('painel');
+  const [aba, setAba] = useState<'painel' | 'ranking' | 'quiz'>('painel');
 
   useEffect(() => {
     const u1 = watchFeed(sid, setFeed);
@@ -163,9 +164,11 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
       <div className="prof-tabs">
         <button className={aba === 'painel' ? 'active' : ''} onClick={() => setAba('painel')}>Painel</button>
         <button className={aba === 'ranking' ? 'active' : ''} onClick={() => setAba('ranking')}>Ranking</button>
+        <button className={aba === 'quiz' ? 'active' : ''} onClick={() => setAba('quiz')}>Quiz</button>
       </div>
 
       {aba === 'ranking' && <RankingTab sid={sid} rodada={state.session?.rodada} />}
+      {aba === 'quiz' && <QuizTab sid={sid} hosts={state.hosts} online={state.onlineHosts.length} />}
 
       {aba === 'painel' && (
       <div className="prof-grid">

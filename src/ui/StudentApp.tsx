@@ -14,6 +14,7 @@ import { runCommand } from '../sim/engine';
 import { SHORTCUT_COMMANDS } from '../sim/help';
 import type { Action, Host, SimContext } from '../sim/types';
 import { Footer } from './Footer';
+import { QuizAluno } from './QuizAluno';
 import { Pratica1 } from './Pratica1';
 import { SitesTab } from './SitesTab';
 import { Terminal, TerminalHandle, TermLine, expandLines } from './Terminal';
@@ -336,6 +337,8 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
       </div>
 
       <Footer />
+
+      <QuizAluno sid={sid} uid={me.uid} />
 
       <div className="toasts">
         {toasts.map((t) => (
