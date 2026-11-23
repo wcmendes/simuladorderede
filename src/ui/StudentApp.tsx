@@ -342,7 +342,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
                 sessao={{
                   sid,
                   uid: me.uid,
-                  epoch: state.session?.rankingEpoch,
+                  epoch: `${state.session?.createdAt ?? 0}:${state.session?.rankingEpoch ?? 0}`,
                   aulaDiag: state.session?.aulaDiag,
                   salvar: (score, aoVivo) => saveAula(sid, me.uid, me.name, score, aoVivo),
                 }}

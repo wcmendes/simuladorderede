@@ -5,6 +5,7 @@ import { setAulaDiag, type ScoreDoc } from '../../firebase/data';
 import {
   DEFEITOS,
   ROTULO_DEFEITO,
+  normalizarAula,
   resumoAoVivo,
   resumoTurma,
   sortearDefeito,
@@ -107,6 +108,30 @@ export function AulaAoVivo({ sid, scores, online, aulaDiag }: Props) {
           ))}
         </tbody>
       </table>
+
+      <h3 style={{ fontSize: 15, margin: '16px 0 6px' }}>Por aluno</h3>
+      {scores.length === 0 && <p style={{ color: 'var(--muted)', fontSize: 13 }}>Ninguém respondeu ainda.</p>}
+      {scores.length > 0 && (
+        <table className="students">
+          <thead><tr><th>Aluno</th><th>Portas</th><th>Diagnóstico</th><th>Cmds</th><th>Nuvem</th></tr></thead>
+          <tbody>
+            {[...scores]
+              .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+              .map((s) => {
+                const a = normalizarAula(s.aula);
+                return (
+                  <tr key={s.uid}>
+                    <td>{s.name}</td>
+                    <td>{a.portas.total ? `${a.portas.ok}/${a.portas.total}` : '—'}</td>
+                    <td>{a.diagnostico.total ? `${a.diagnostico.ok}/${a.diagnostico.total}` : '—'}</td>
+                    <td>{a.diagnostico.total ? String(a.diagnostico.media).replace('.', ',') : '—'}</td>
+                    <td>{a.nuvem.total ? `${a.nuvem.ok}/${a.nuvem.total}` : '—'}</td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      )}
 
       <h2 style={{ marginTop: 22 }}>Diagnóstico ao vivo</h2>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 0 }}>

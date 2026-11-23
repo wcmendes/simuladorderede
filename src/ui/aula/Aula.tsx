@@ -28,7 +28,7 @@ const ABAS: Array<[AbaAula, string, string]> = [
 export interface SessaoAula {
   sid: string;
   uid: string;
-  epoch?: number; // muda quando o professor zera o ranking
+  epoch?: string | number; // muda quando o professor zera o ranking ou reseta a sessão
   aulaDiag?: AulaDiagDoc;
   /** Uma gravação por resposta. */
   salvar: (score: AulaScore, aoVivo?: RespostaAoVivo) => Promise<void>;
@@ -71,6 +71,10 @@ export function Aula({ sessao, usarHash = false }: Props) {
   }, [usarHash]);
 
   // O placar local pertence a (sessão, época do ranking). Se mudar, recarrega.
+  useEffect(() => {
+    if (chaveVivo) setMinhaAoVivo(lerJson<RespostaAoVivo | undefined>(chaveVivo, undefined, (r) => (r as RespostaAoVivo | null) ?? undefined));
+  }, [chaveVivo]);
+
   useEffect(() => {
     if (chave) setScore(lerJson(chave, aulaVazia(), normalizarAula));
   }, [chave]);

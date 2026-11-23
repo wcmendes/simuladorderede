@@ -47,18 +47,21 @@ Dentro de uma sessão ela é a aba **Máscara** da tela do aluno. Fora de sessã
 
 ## 🎓 Aula interativa (TCP × UDP, Portas, Sem internet?, Nuvem)
 
-Quatro abas para a aula online. Cada aba tem o seu link, para colar direto no chat do Meet (links acima). Funciona sem sessão e sem login em `/aula`; dentro de uma sessão é a aba **Aula interativa** da tela do aluno. Funciona no celular.
+Quatro abas para a aula online. Cada aba tem o seu link, para colar direto no chat do Meet (links acima). Em `/aula` o aluno usa as abas sem código e sem número de computador. Se digitar nome e sobrenome no topo, entra na sessão única **AULA** e o professor passa a ver o progresso dele, identificado. Sem nome, nada é registrado. Dentro de uma sessão também é a aba **Aula interativa** da tela do aluno. Funciona no celular.
 
 - **TCP × UDP** (`/aula#tcp-udp`): ajuste a perda de pacotes (0 a 40%) e clique em **Enviar 10 pacotes**. Peça que a turma compare as duas pistas com 0% e depois com 40%: o TCP faz o aperto de mão, espera cada ACK e reenvia o perdido; o UDP sai em rajada e deixa buracos vermelhos.
 - **Portas** (`/aula#portas`): encaixe SSH 22, DNS 53, HTTP 80, HTTPS 443, FTP 21 e SMTP 25. No computador, arraste; no celular, toque no serviço e depois na porta. Acertou: a porta fica verde com o protocolo e a função. Errou: ela balança.
 - **Sem internet?** (`/aula#diagnostico`): um PC com defeito escondido (cabo/placa, gateway, provedor ou DNS). Os alunos rodam os comandos, de baixo para cima, e escolhem o defeito. Ganha o "Diagnóstico de profissional!" quem acerta com 3 comandos ou menos.
 - **Nuvem** (`/aula#nuvem`): classificar 10 serviços em IaaS, PaaS ou SaaS, com a analogia da pizza.
 
-**Ranking e diagnóstico ao vivo (dentro da sessão).** Cada resposta de Portas, Sem internet? e Nuvem grava o placar do aluno no mesmo documento do ranking (`sessions/{sid}/scores/{uid}`, campos `portas`, `diagnostico` com a média de comandos, e `nuvem`). Na aba **Ranking** do painel do professor:
+**Nova turma:** no painel, **Resetar (nova turma)** apaga alunos e placares e abre uma sessão AULA nova. Quem estava com a página aberta volta sozinho, com o nome salvo, sem herdar o placar da turma anterior. A sessão AULA precisa ter sido aberta uma vez em `/professor` antes dos alunos entrarem.
+
+**Ranking e diagnóstico ao vivo (quando o aluno está na sessão).** Cada resposta de Portas, Sem internet? e Nuvem grava o placar do aluno no mesmo documento do ranking (`sessions/{sid}/scores/{uid}`, campos `portas`, `diagnostico` com a média de comandos, e `nuvem`). Na aba **Ranking** do painel do professor:
 
 1. Os acertos da aula somam no ranking (coluna **Aula**).
-2. Aparecem o percentual de acerto por atividade, a média de comandos e qual defeito a turma mais erra.
-3. **Defeito para todos** sorteia o mesmo defeito para todos os alunos. Quando todos os alunos online respondem, ou quando você clica em **Revelar**, a turma vê o defeito certo, quantos acertaram e a média de comandos. **Encerrar** devolve a aba ao modo livre.
+2. A tabela **Por aluno** mostra, com nome, os acertos em Portas, Diagnóstico (com a média de comandos) e Nuvem.
+3. Aparecem o percentual de acerto por atividade, a média de comandos e qual defeito a turma mais erra.
+4. **Defeito para todos** sorteia o mesmo defeito para todos os alunos. Quando todos os alunos online respondem, ou quando você clica em **Revelar**, a turma vê o defeito certo, quantos acertaram e a média de comandos. **Encerrar** devolve a aba ao modo livre.
 
 ## 🏆 Ranking do Desafio em aula
 

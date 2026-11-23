@@ -59,7 +59,7 @@ export function ProfessorApp({ uid }: { uid: string }) {
 
   if (!sid) return <CreateSession uid={uid} aviso={aviso} onCreated={guardar} />;
 
-  return <Dashboard sid={sid} onEnded={() => { localStorage.removeItem('labredes-prof-sid'); setAuto(false); setAviso(''); setSid(null); }} />;
+  return <Dashboard sid={sid} onEnded={() => { localStorage.removeItem('labredes-prof-sid'); setAuto(true); setAviso(''); setSid(null); }} />;
 }
 
 function genCode(): string {
@@ -186,13 +186,13 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
           className="btn danger"
           style={{ marginLeft: 'auto' }}
           onClick={async () => {
-            if (confirm('Encerrar a sessão apaga TODOS os dados (alunos, sites, respostas). Confirmar?')) {
+            if (confirm('Resetar para uma nova turma apaga TODOS os dados (alunos, sites, respostas, placares) e abre uma sessão nova. Confirmar?')) {
               await endSession(sid);
               onEnded();
             }
           }}
         >
-          Encerrar sessão
+          Resetar (nova turma)
         </button>
       </div>
 

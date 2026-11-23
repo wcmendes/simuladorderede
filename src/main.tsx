@@ -10,7 +10,7 @@ import { StudentApp } from './ui/StudentApp';
 import { HelpPage } from './ui/HelpPage';
 import { Footer } from './ui/Footer';
 import { Mascara } from './ui/mascara/Mascara';
-import { Aula } from './ui/aula/Aula';
+import { AulaPublica } from './ui/aula/AulaPublica';
 
 /** Rota atual: aceita "#/professor" (hash) e "/professor" (caminho). */
 function currentRoute(): string {
@@ -77,7 +77,7 @@ function App() {
   if (route.startsWith('/aula')) {
     return (
       <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1 }}><Aula usarHash /></div>
+        <div style={{ flex: 1 }}><AulaPublica uid={uid} /></div>
         <Footer />
       </div>
     );
