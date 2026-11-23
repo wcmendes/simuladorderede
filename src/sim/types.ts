@@ -7,6 +7,7 @@ export interface Faults {
   ispDown: boolean;
   gatewayDown: number[]; // índices de sub-rede com o gateway fora do ar
   lossPct: number; // 0 a 50
+  cableDown?: boolean; // cabo/placa de rede desconectado (desafio de diagnóstico)
 }
 
 export const NO_FAULTS: Faults = { dnsDown: false, ispDown: false, gatewayDown: [], lossPct: 0 };

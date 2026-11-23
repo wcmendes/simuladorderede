@@ -94,6 +94,20 @@ function ipconfig(ctx: SimContext, args: string[]): Result {
   const v6 = ipv6Of(me.mac);
   const lines: Line[] = [out(), out('Adaptador Ethernet Ethernet:'), out()];
 
+  if (ctx.faults.cableDown) {
+    lines.push(out('   Estado da mídia. . . . . . . . . . . . . . : mídia desconectada'));
+    lines.push(out(`   Sufixo DNS específico de conexão. . . . . . : ${DOMAIN}`));
+    if (all) {
+      lines.push(
+        out('   Descrição . . . . . . . . . . . . . . . . . : Intel(R) Ethernet Connection'),
+        out(`   Endereço Físico . . . . . . . . . . . . . . : ${me.mac}`),
+        out('   DHCP Habilitado . . . . . . . . . . . . . . : Sim'),
+      );
+    }
+    lines.push(out());
+    return { ...empty(), lines };
+  }
+
   if (all) {
     lines.push(
       out(`   Sufixo DNS específico de conexão. . . . . . : ${DOMAIN}`),
@@ -153,7 +167,7 @@ function ping(ctx: SimContext, args: string[]): Result {
     display = `${target}`;
     void rev;
   } else {
-    if (ctx.faults.dnsDown) {
+    if (ctx.faults.dnsDown || ctx.faults.cableDown) {
       return {
         ...empty(),
         lines: [
@@ -175,6 +189,13 @@ function ping(ctx: SimContext, args: string[]): Result {
 
   const path = computePath(ctx, destIp);
   const lines: Line[] = [out(`Disparando ${display} com 32 bytes de dados:`)];
+
+  if (ctx.faults.cableDown) {
+    for (let i = 0; i < count; i++) lines.push(out('PING: falha geral.', 600));
+    lines.push(out(), out(`Estatísticas do Ping para ${destIp}:`));
+    lines.push(out(`    Pacotes: Enviados = ${count}, Recebidos = 0, Perdidos = ${count} (100% de perda),`));
+    return { ...empty(), lines };
+  }
 
   const peer = ctx.hosts.find((h) => h.ip === destIp && h.uid !== ctx.me.uid);
   const events: SimEventDraft[] = [];
@@ -234,7 +255,7 @@ function totalLatency(ctx: SimContext, path: ReturnType<typeof computePath>): nu
 }
 
 function dnsHintLines(): Line[] {
-  return [hint('Dica: tente o mesmo destino pelo IP. Se funcionar, o problema está no serviço de nomes (DNS).')];
+  return [hint('Dica: tente o mesmo destino pelo IP. Se funcionar, o problema é…')];
 }
 
 // ---------------------------------------------------------------------------
@@ -255,7 +276,7 @@ function tracert(ctx: SimContext, args: string[]): Result {
     destIp = target;
     display = target;
   } else {
-    if (ctx.faults.dnsDown) {
+    if (ctx.faults.dnsDown || ctx.faults.cableDown) {
       return { ...empty(), lines: [out(`Não é possível resolver o sistema de destino ${target}.`), ...dnsHintLines()] };
     }
     const res = resolveName(ctx, target);
@@ -270,6 +291,11 @@ function tracert(ctx: SimContext, args: string[]): Result {
     out('com no máximo 30 saltos:'),
     out(),
   ];
+
+  if (ctx.faults.cableDown) {
+    lines.push(out('  1  Falha geral.', 500), out(), out('Rastreamento concluído.'));
+    return { ...empty(), lines };
+  }
 
   const events: SimEventDraft[] = [];
   path.hops.forEach((hop, i) => {
@@ -308,7 +334,7 @@ function nslookup(ctx: SimContext, args: string[]): Result {
     return { ...empty(), lines: [hint('Uso: nslookup <nome ou IP>. Exemplo: nslookup www.edufor.edu.br')] };
   }
 
-  if (ctx.faults.dnsDown) {
+  if (ctx.faults.dnsDown || ctx.faults.cableDown) {
     return {
       ...empty(),
       lines: [
@@ -468,12 +494,16 @@ function curl(ctx: SimContext, args: string[], browse: boolean): Result {
   if (isValidIp(target)) {
     ip = target;
   } else {
-    if (ctx.faults.dnsDown) {
+    if (ctx.faults.dnsDown || ctx.faults.cableDown) {
       return { ...empty(), lines: [out(`curl: (6) Could not resolve host: ${target}`), ...dnsHintLines()] };
     }
     const res = resolveName(ctx, target);
     if (!res) return { ...empty(), lines: [out(`curl: (6) Could not resolve host: ${target}`)] };
     ip = res.ip;
+  }
+
+  if (ctx.faults.cableDown) {
+    return { ...empty(), lines: [out(`curl: (7) Failed to connect to ${target} port 80: Network is unreachable`)] };
   }
 
   const page = siteByIp(ctx, ip);

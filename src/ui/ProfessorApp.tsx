@@ -16,6 +16,7 @@ import type { Faults, NetMode, SimEvent } from '../sim/types';
 import { Footer } from './Footer';
 import { RankingTab } from './prof/RankingTab';
 import { QuizTab } from './prof/QuizTab';
+import { DiagTab } from './prof/DiagTab';
 import { QrCode } from './QrCode';
 import { faultsOf, useSessionState } from './useSessionState';
 
@@ -100,7 +101,7 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
   const [feed, setFeed] = useState<SimEvent[]>([]);
   const [answers, setAnswers] = useState<Record<string, AnswersDoc>>({});
   const [showQr, setShowQr] = useState(true);
-  const [aba, setAba] = useState<'painel' | 'ranking' | 'quiz'>('painel');
+  const [aba, setAba] = useState<'painel' | 'ranking' | 'quiz' | 'diag'>('painel');
 
   useEffect(() => {
     const u1 = watchFeed(sid, setFeed);
@@ -165,9 +166,11 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
         <button className={aba === 'painel' ? 'active' : ''} onClick={() => setAba('painel')}>Painel</button>
         <button className={aba === 'ranking' ? 'active' : ''} onClick={() => setAba('ranking')}>Ranking</button>
         <button className={aba === 'quiz' ? 'active' : ''} onClick={() => setAba('quiz')}>Quiz</button>
+        <button className={aba === 'diag' ? 'active' : ''} onClick={() => setAba('diag')}>Diagnóstico</button>
       </div>
 
       {aba === 'ranking' && <RankingTab sid={sid} rodada={state.session?.rodada} />}
+      {aba === 'diag' && <DiagTab sid={sid} session={state.session} hosts={state.hosts} online={state.onlineHosts.length} />}
       {aba === 'quiz' && <QuizTab sid={sid} hosts={state.hosts} online={state.onlineHosts.length} />}
 
       {aba === 'painel' && (
@@ -213,6 +216,10 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
           <div className="fault-row">
             <Toggle on={faults.ispDown} onClick={() => updateFault({ ispDown: !faults.ispDown })} />
             <span>Link do provedor caído</span>
+          </div>
+          <div className="fault-row">
+            <Toggle on={!!faults.cableDown} onClick={() => updateFault({ cableDown: !faults.cableDown })} />
+            <span>Cabo/placa de rede desconectado</span>
           </div>
           {gateways.map((gw, i) => (
             <div className="fault-row" key={i}>

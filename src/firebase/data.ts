@@ -32,6 +32,7 @@ import type { Faults, Host, NetMode, Site, SimEvent, SimEventDraft } from '../si
 import type { Nivel, Tipo } from '../sim/mascara';
 import { normalizarScore, type Score } from '../sim/ranking';
 import type { RespostaQuiz } from '../sim/quiz';
+import type { Falha, RespostaDiag } from '../sim/diag';
 
 /** Rodada do Desafio: restringe o tipo e a dificuldade das perguntas de toda a turma. */
 export interface RodadaDoc {
@@ -48,6 +49,7 @@ export interface SessionDoc {
   faults: Faults;
   rodada?: RodadaDoc;
   rankingEpoch?: number; // muda quando o professor zera o ranking
+  diag?: { ativo: boolean; rodada: number }; // desafio de diagnóstico (a falha em si não é gravada aqui)
 }
 
 const sessionsCol = collection(db, 'sessions');
@@ -293,6 +295,27 @@ async function apagarColecao(col: ReturnType<typeof collection>): Promise<void> 
   }
 }
 
+// --- Desafio de diagnóstico ---
+
+const diagAnswersCol = (sid: string) => collection(db, 'sessions', sid, 'diagAnswers');
+
+export async function setDiag(sid: string, diag: { ativo: boolean; rodada: number }): Promise<void> {
+  await updateDoc(sessionRef(sid), { diag });
+}
+
+export async function answerDiag(sid: string, round: number, uid: string, choice: Falha, cmds: number): Promise<void> {
+  await setDoc(doc(diagAnswersCol(sid), `${round}_${uid}`), { uid, round, choice, cmds });
+}
+
+export async function getDiagAnswer(sid: string, round: number, uid: string): Promise<{ choice: Falha; cmds: number } | null> {
+  const snap = await getDoc(doc(diagAnswersCol(sid), `${round}_${uid}`));
+  return snap.exists() ? (snap.data() as { choice: Falha; cmds: number }) : null;
+}
+
+export function watchDiagAnswers(sid: string, cb: (r: RespostaDiag[]) => void): Unsubscribe {
+  return onSnapshot(diagAnswersCol(sid), (snap) => cb(snap.docs.map((d) => d.data() as RespostaDiag)));
+}
+
 // --- Quiz ao vivo ---
 // quiz/state: único documento que o aluno escuta. As respostas ficam em quizAnswers/{q}_{uid}
 // (só o professor lê a coleção inteira e agrega).
@@ -350,7 +373,7 @@ export async function removeHost(sid: string, uid: string): Promise<void> {
 export async function endSession(sid: string): Promise<void> {
   const colecoes = [
     hostsCol(sid), presenceCol(sid), sitesCol(sid), eventsCol(sid), answersCol(sid), scoresCol(sid),
-    collection(db, 'sessions', sid, 'quizAnswers'), collection(db, 'sessions', sid, 'quiz'),
+    collection(db, 'sessions', sid, 'quizAnswers'), collection(db, 'sessions', sid, 'quiz'), diagAnswersCol(sid),
   ];
   for (const col of colecoes) await apagarColecao(col);
   await deleteDoc(doc(db, 'sessions', sid, 'meta', 'ipPool')).catch(() => {});

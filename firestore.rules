@@ -99,6 +99,25 @@ service cloud.firestore {
         allow delete: if isOwner(sid);
       }
 
+      // Desafio de diagnóstico ("rede quebrada"): id = "<rodada>_<uid>", só criação, só com a
+      // rodada ativa. O gabarito não fica no banco (o professor o guarda no próprio navegador).
+      match /diagAnswers/{id} {
+        allow get: if signedIn() && (isOwner(sid) || id.matches('^[0-9]+_' + request.auth.uid + '$'));
+        allow list: if isOwner(sid);
+        allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['uid', 'round', 'choice', 'cmds'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.round is int
+          && id == string(request.resource.data.round) + '_' + request.auth.uid
+          && request.resource.data.choice in ['dns', 'gateway', 'provedor', 'cabo']
+          && request.resource.data.cmds is int
+          && request.resource.data.cmds >= 0 && request.resource.data.cmds <= 999
+          && get(/databases/$(database)/documents/sessions/$(sid)).data.diag.ativo == true
+          && get(/databases/$(database)/documents/sessions/$(sid)).data.diag.rodada == request.resource.data.round;
+        allow update: if false;
+        allow delete: if isOwner(sid);
+      }
+
       // Contador de IPs (alocação por transação).
       match /meta/{doc} {
         allow read, write: if signedIn();

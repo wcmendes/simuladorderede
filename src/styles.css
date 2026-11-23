@@ -270,3 +270,13 @@ table.students th { color: var(--muted); }
 .quiz-rodape { text-align: center; font-size: 22px; padding: 2vh 0 0; min-height: 8vh; }
 .quiz-rodape .ok { color: #5be584; } .quiz-rodape .err { color: #ff7b72; }
 @media (max-width: 600px) { .quiz-opcoes { grid-template-columns: 1fr; } .quiz-opcao { min-height: 9vh; } }
+
+/* Desafio de diagnóstico */
+.diag-banner { background: #2a2410; border-bottom: 2px solid #8a6d1a; color: #f0e2a8; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
+.diag-banner code { background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 4px; }
+.diag-cmds { margin-left: 8px; color: #fff; }
+.diag-resp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.diag-resp button:not(.btn) { background: var(--panel2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 14px; }
+.diag-resp button.sel { border-color: #ffd34e; background: #3b3416; }
+.diag-resp .btn { padding: 6px 14px; }
+.diag-ok { color: #5be584; margin-top: 6px; } .diag-err { color: #ff7b72; margin-top: 6px; }

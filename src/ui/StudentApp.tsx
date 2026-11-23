@@ -15,6 +15,8 @@ import { SHORTCUT_COMMANDS } from '../sim/help';
 import type { Action, Host, SimContext } from '../sim/types';
 import { Footer } from './Footer';
 import { QuizAluno } from './QuizAluno';
+import { DiagBanner, useDiagAluno } from './DiagAluno';
+import { classificarComando } from '../sim/diag';
 import { Pratica1 } from './Pratica1';
 import { SitesTab } from './SitesTab';
 import { Terminal, TerminalHandle, TermLine, expandLines } from './Terminal';
@@ -32,6 +34,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
   const state = useSessionState(sid, me.uid);
   const faults = faultsOf(state.session);
   const mode = state.session?.mode ?? '/25';
+  const diag = useDiagAluno(sid, me.uid, state.session?.diag, faults);
 
   const [lines, setLines] = useState<TermLine[]>([]);
   const [busy, setBusy] = useState(false);
@@ -164,6 +167,16 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
     setLines((l) => [...l, echo]);
     if (!cmd.trim()) return;
 
+    // Desafio de diagnóstico: só ping, nslookup, tracert e ipconfig, e cada um conta.
+    if (diag.ativo && !diag.resposta) {
+      const tipo = classificarComando(cmd);
+      if (tipo === 'bloqueado') {
+        pushLines([{ text: 'Desafio de diagnóstico: use só ping, nslookup, tracert e ipconfig.', kind: 'hint' }]);
+        return;
+      }
+      if (tipo === 'conta') diag.contar();
+    }
+
     setBusy(true);
     const result = runCommand(ctx, cmd);
 
@@ -254,6 +267,7 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
 
       <div className={'student-body' + (tab === 'mascara' ? ' wide-side' : '')}>
         <div className="term-pane">
+          <DiagBanner d={diag} />
           <div className="shortcut-bar">
             {SHORTCUT_COMMANDS.map((c) => (
               <button key={c} onClick={() => termRef.current?.setInput(c)} title="Clique para preencher o comando">
