@@ -10,6 +10,7 @@ import { StudentApp } from './ui/StudentApp';
 import { HelpPage } from './ui/HelpPage';
 import { Footer } from './ui/Footer';
 import { Mascara } from './ui/mascara/Mascara';
+import { Home } from './ui/Home';
 import { AulaPublica } from './ui/aula/AulaPublica';
 
 /** Rota atual: aceita "#/professor" (hash) e "/professor" (caminho). */
@@ -74,6 +75,12 @@ function App() {
     );
   }
 
+  const codeParam = new URLSearchParams(route.split('?')[1] ?? '').get('code') ?? undefined;
+  const raiz = route === '/' || route === '' || route.startsWith('/?');
+
+  // Tela inicial: no endereço raiz (sem código de sessão e sem sessão já aberta) e em /inicio.
+  if (route.startsWith('/inicio') || (raiz && !codeParam && !joined)) return <Home />;
+
   if (route.startsWith('/aula')) {
     return (
       <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -105,7 +112,6 @@ function App() {
     return <StudentApp sid={joined.sid} me={joined.host} />;
   }
 
-  const codeParam = new URLSearchParams(route.split('?')[1] ?? '').get('code') ?? undefined;
   return (
     <JoinScreen
       uid={uid}

@@ -264,7 +264,8 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
         <span className="tag">IP <b>{me.ip}</b> / {me.mask}</span>
         <span className="tag">gateway <b>{me.gateway}</b></span>
         <span className="tag">{subnetLabel}</span>
-        <a href="#/ajuda" target="_blank" style={{ marginLeft: 'auto', fontSize: 13 }}>Ajuda</a>
+        <a href="/inicio" style={{ marginLeft: 'auto', fontSize: 13 }}>Início</a>
+        <a href="#/ajuda" target="_blank" style={{ fontSize: 13 }}>Ajuda</a>
       </div>
 
       <div className={'student-body' + (tab === 'mascara' || tab === 'aula' ? ' wide-side' : '')}>

@@ -6,8 +6,9 @@ Feito com **Vite + React + TypeScript**, com o motor da simulação em TypeScrip
 
 🔗 **Acesse:** https://simuladorderede.web.app
 
+- 🏠 **Tela inicial (passe este link à turma):** https://simuladorderede.web.app. Explica o que fazer e leva a cada área; tem o link para a área do professor.
 - 👩‍🏫 **Professor:** https://simuladorderede.web.app/professor
-- 📱 **Aluno:** https://simuladorderede.web.app
+- 📱 **Entrar na rede (terminal):** https://simuladorderede.web.app/entrar
 - 🧮 **Máscara de rede (estudo sozinho, sem sessão):** https://simuladorderede.web.app/mascara
 - 🎓 **Aula interativa (sem sessão):** https://simuladorderede.web.app/aula
   - TCP × UDP: https://simuladorderede.web.app/aula#tcp-udp
