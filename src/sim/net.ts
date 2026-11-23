@@ -119,6 +119,31 @@ export function subnetIndexForPc(pc: number, mode: NetMode): number {
   return Math.min(Math.floor((pc - 1) / perSubnet), count - 1);
 }
 
+/** Computadores por sub-rede (40 divididos em faixas iguais): /24 = 40, /25 = 20, /26 = 10. */
+export function pcsPorSubrede(mode: NetMode): number {
+  return Math.ceil(40 / subnetsFor(mode).length);
+}
+
+/**
+ * Números de computador para dividir `n` alunos em partes iguais, uma por sub-rede
+ * (metade e metade no /25; quatro partes no /26), em sequência dentro de cada parte:
+ * no /25 com 6 alunos, 1, 2, 3 e 21, 22, 23. Se `n` for ímpar, as primeiras partes ficam com um a mais.
+ * Lança erro se uma parte não couber na faixa da sub-rede.
+ */
+export function dividirTurma(n: number, mode: NetMode): number[] {
+  const partes = subnetsFor(mode).length;
+  const faixa = pcsPorSubrede(mode);
+  const base = Math.floor(n / partes);
+  const extra = n % partes;
+  const out: number[] = [];
+  for (let g = 0; g < partes; g++) {
+    const tamanho = base + (g < extra ? 1 : 0);
+    if (tamanho > faixa) throw new RangeError(`Cabem no máximo ${faixa} alunos por sub-rede no modo ${mode}.`);
+    for (let k = 0; k < tamanho; k++) out.push(g * faixa + k + 1);
+  }
+  return out;
+}
+
 /** O primeiro IP de aluno é gateway + 9 (ex.: .10 na primeira sub-rede). */
 export const FIRST_HOST_OFFSET = 10;
 

@@ -21,8 +21,16 @@ service cloud.firestore {
       match /hosts/{uid} {
         allow read: if signedIn();
         allow create: if signedIn() && request.auth.uid == uid;
-        allow update: if signedIn() && request.auth.uid == uid
-                      && request.resource.data.ip == resource.data.ip;
+        // Dados de rede (pc, ip, mask, gateway, subnetIndex, hostname): o aluno não muda os próprios;
+        // só o dono da sessão (professor) muda, e só esses campos.
+        allow update: if signedIn() && (
+          (request.auth.uid == uid
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['pc', 'ip', 'mask', 'gateway', 'subnetIndex', 'hostname']))
+          || (isOwner(sid)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['pc', 'ip', 'mask', 'gateway', 'subnetIndex', 'hostname']))
+        );
         allow delete: if signedIn() && (request.auth.uid == uid || isOwner(sid));
       }
 

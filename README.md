@@ -40,6 +40,10 @@ Acompanha a Prática 1 (diagnóstico de rede no Windows, endereçamento IP e cri
 3. Os alunos usam o **terminal**: pingam colegas (que recebem uma notificação na tela), publicam sites (`site criar padaria`) e os descobrem com `nslookup` e `tracert`.
 4. O professor liga **falhas na rede** em tempo real e acompanha o **feed ao vivo** das interações, a lista de alunos online e o progresso da Prática 1.
 
+## 🔀 Mover alunos de sub-rede (professor)
+
+Na aba **Painel**, a coluna **Nº do PC** é editável: mude o número (1 a 40) e clique em **Salvar**. A sub-rede sai da mesma regra da entrada (no /25: 1–20 sub-rede 1, 21–40 sub-rede 2; no /26: de 10 em 10). Se a sub-rede muda, o aluno recebe um IP novo, com a máscara, o gateway e o hostname (`PC-nome-NN`) da nova sub-rede, e o IP antigo não é reaproveitado. A tela do aluno atualiza sozinha, mostra o aviso e limpa o cache ARP. O botão **Dividir a turma ao meio** (no /26, em 4 partes) redistribui os alunos online em sequência (1, 2, 3… e 21, 22, 23…). Só o dono da sessão altera esses campos (veja `firestore.rules`).
+
 ## 🧮 Aba Máscara
 
 Ferramenta "Máscara de rede, bit a bit", com 4 sub-abas: **Calcular** (32 bits coloridos, passo a passo e régua de blocos), **Mesma rede?** (destaca o primeiro bit de rede diferente), **Dividir em sub-redes** (2, 4, 8 ou 16) e **Desafio** (perguntas aleatórias com correção pelo truque do salto). Azul = rede, laranja = host, vermelho = destaque.

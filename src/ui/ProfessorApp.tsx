@@ -5,6 +5,7 @@ import {
   CODIGO_PADRAO,
   createSession,
   endSession,
+  moverHost,
   removeHost,
   removeSite,
   setFaults,
@@ -13,7 +14,7 @@ import {
   type AnswersDoc,
 } from '../firebase/data';
 import { PROF_PIN } from '../firebase/app';
-import { gatewayList } from '../sim/net';
+import { dividirTurma, gatewayList } from '../sim/net';
 import type { Faults, NetMode, SimEvent } from '../sim/types';
 import { Footer } from './Footer';
 import { RankingTab } from './prof/RankingTab';
@@ -152,6 +153,49 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
   const gateways = gatewayList(mode);
   const onlineUids = new Set(state.onlineHosts.map((h) => h.uid));
 
+  // Nº do computador: rascunho por aluno; "Salvar" move o aluno para a sub-rede do novo número.
+  const [pcEdit, setPcEdit] = useState<Record<string, string>>({});
+  const [movendo, setMovendo] = useState<string | null>(null);
+  const [aviso, setAviso] = useState('');
+
+  async function salvarPc(uid: string, valor: string) {
+    const n = Number(valor);
+    setAviso('');
+    if (!Number.isInteger(n) || n < 1 || n > 40) return setAviso('O número do computador deve ser de 1 a 40.');
+    setMovendo(uid);
+    try {
+      await moverHost(sid, uid, n, mode);
+      setPcEdit(({ [uid]: _tira, ...resto }) => resto);
+    } catch (e) {
+      setAviso('Não consegui mover o aluno: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setMovendo(null);
+    }
+  }
+
+  async function dividirAoMeio() {
+    const alvo = [...state.onlineHosts].sort((a, b) => a.createdAt - b.createdAt);
+    const partes = gateways.length;
+    setAviso('');
+    let numeros: number[];
+    try {
+      numeros = dividirTurma(alvo.length, mode);
+    } catch (e) {
+      return setAviso(e instanceof Error ? e.message : String(e));
+    }
+    if (!alvo.length) return setAviso('Nenhum aluno online para dividir.');
+    if (!confirm(`Redistribuir ${alvo.length} aluno(s) online em ${partes} sub-rede(s)? Quem mudar de sub-rede recebe IP novo.`)) return;
+    setMovendo('todos');
+    try {
+      for (let i = 0; i < alvo.length; i++) await moverHost(sid, alvo[i].uid, numeros[i], mode);
+      setPcEdit({});
+    } catch (e) {
+      setAviso('A divisão parou no meio: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setMovendo(null);
+    }
+  }
+
   async function updateFault(patch: Partial<Faults>) {
     await setFaults(sid, { ...faults, ...patch });
   }
@@ -211,9 +255,16 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
       <div className="prof-grid">
         <div className="prof-section">
           <h2>Alunos online ({state.onlineHosts.length})</h2>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+            <button className="btn secondary" disabled={movendo !== null} onClick={dividirAoMeio}>
+              {gateways.length === 1 ? 'Numerar a turma em sequência' : gateways.length === 2 ? 'Dividir a turma ao meio' : `Dividir a turma em ${gateways.length} partes`}
+            </button>
+            <span style={{ color: 'var(--muted)', fontSize: 12 }}>Só os alunos online. Quem muda de sub-rede recebe IP novo.</span>
+          </div>
+          {aviso && <div className="error-msg" style={{ marginBottom: 8 }}>{aviso}</div>}
           <table className="students">
             <thead>
-              <tr><th>Nome</th><th>PC</th><th>Host</th><th>IP</th><th>Sub</th><th>P1</th><th>Site</th><th></th></tr>
+              <tr><th>Nome</th><th>Nº do PC</th><th>Host</th><th>IP</th><th>Sub</th><th>P1</th><th>Site</th><th></th></tr>
             </thead>
             <tbody>
               {state.hosts.map((h) => {
@@ -223,7 +274,25 @@ function Dashboard({ sid, onEnded }: { sid: string; onEnded: () => void }) {
                 return (
                   <tr key={h.uid} style={{ opacity: online ? 1 : 0.45 }}>
                     <td>{h.name}</td>
-                    <td>{h.pc}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <input
+                        type="number"
+                        min={1}
+                        max={40}
+                        aria-label={`Número do computador de ${h.name}`}
+                        style={{ width: 64 }}
+                        value={pcEdit[h.uid] ?? String(h.pc)}
+                        onChange={(e) => setPcEdit((p) => ({ ...p, [h.uid]: e.target.value }))}
+                      />{' '}
+                      <button
+                        className="btn secondary"
+                        style={{ padding: '2px 8px', fontSize: 12 }}
+                        disabled={movendo !== null || pcEdit[h.uid] === undefined || pcEdit[h.uid] === String(h.pc)}
+                        onClick={() => salvarPc(h.uid, pcEdit[h.uid])}
+                      >
+                        {movendo === h.uid ? '...' : 'Salvar'}
+                      </button>
+                    </td>
                     <td>{h.hostname}</td>
                     <td>{h.ip}</td>
                     <td>{h.subnetIndex + 1}</td>

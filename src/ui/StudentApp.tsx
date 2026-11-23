@@ -8,6 +8,7 @@ import {
   saveAula,
   saveScore,
   updateSite,
+  updateSiteIp,
   watchAnswers,
   watchMyEvents,
 } from '../firebase/data';
@@ -32,8 +33,15 @@ const COMMAND_NAMES = ['ipconfig', 'ping', 'tracert', 'nslookup', 'arp', 'route'
 interface Toast { id: number; text: string; }
 type Tab = 'pratica' | 'sites' | 'vm' | 'mascara' | 'aula';
 
-export function StudentApp({ sid, me }: { sid: string; me: Host }) {
-  const state = useSessionState(sid, me.uid);
+export function StudentApp({ sid, me: meSalvo }: { sid: string; me: Host }) {
+  const state = useSessionState(sid, meSalvo.uid);
+  // Os dados de rede vêm do documento ao vivo: o professor pode mudar o nº do PC (e a sub-rede) a qualquer momento.
+  const meVivo = state.hosts.find((h) => h.uid === meSalvo.uid);
+  const me: Host = useMemo(
+    () => meVivo ?? meSalvo,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meVivo?.pc, meVivo?.ip, meVivo?.mask, meVivo?.gateway, meVivo?.subnetIndex, meVivo?.hostname, meSalvo],
+  );
   const faults = faultsOf(state.session);
   const mode = state.session?.mode ?? '/25';
   const diag = useDiagAluno(sid, me.uid, state.session?.diag, faults);
@@ -105,6 +113,28 @@ export function StudentApp({ sid, me }: { sid: string; me: Host }) {
     return unsub;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sid, me.ip, state.onlineHosts]);
+
+  // O professor moveu este computador: avisa, limpa o ARP, corrige o IP do meu site e guarda os dados novos.
+  const anterior = useRef<Host>(meSalvo);
+  useEffect(() => {
+    const a = anterior.current;
+    if (a.ip === me.ip && a.pc === me.pc && a.subnetIndex === me.subnetIndex) return;
+    anterior.current = me;
+    localStorage.setItem('labredes-join', JSON.stringify({ sid, host: me }));
+    if (a.subnetIndex !== me.subnetIndex || a.ip !== me.ip) {
+      const msg = `O professor moveu seu computador para a sub-rede ${me.subnetIndex + 1}. Novo IP: ${me.ip} (máscara ${me.mask}, gateway ${me.gateway}).`;
+      setArpCache([]);
+      toast('🔀 ' + msg);
+      pushLines([{ text: '', kind: 'out' }, { text: msg, kind: 'hint' }, { text: 'Rode ipconfig para conferir.', kind: 'hint' }, { text: '', kind: 'out' }]);
+      const meuSite = state.sites.find((x) => x.ownerUid === me.uid);
+      if (meuSite && meuSite.ip !== me.ip) updateSiteIp(sid, meuSite.name, me.ip).catch(() => {});
+    } else {
+      const msg = `O professor mudou o número do seu computador para ${me.pc}. Hostname: ${me.hostname}.`;
+      toast('🔀 ' + msg);
+      pushLines([{ text: msg, kind: 'hint' }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me]);
 
   // Rodada do professor: avisa e leva o aluno ao Desafio.
   const rodadaAtiva = !!state.session?.rodada?.ativa;

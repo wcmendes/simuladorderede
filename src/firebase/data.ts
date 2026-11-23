@@ -169,6 +169,47 @@ export async function joinSession(
   return host;
 }
 
+/**
+ * O professor muda o nº do computador de um aluno. A sub-rede sai da mesma regra da entrada.
+ * Se a sub-rede muda, o aluno recebe um IP novo pela mesma transação do pool (o contador do pool
+ * só cresce, então o IP antigo nunca é reaproveitado e não há repetição). Se a sub-rede é a mesma,
+ * o IP fica e só o número e o hostname mudam.
+ */
+export async function moverHost(sid: string, uid: string, novoPc: number, mode: NetMode): Promise<Host> {
+  if (!Number.isInteger(novoPc) || novoPc < 1 || novoPc > 40) throw new Error('O número do computador deve ser de 1 a 40.');
+  const hostRef = doc(hostsCol(sid), uid);
+  const poolRef = doc(db, 'sessions', sid, 'meta', 'ipPool');
+  const subIdx = subnetIndexForPc(novoPc, mode);
+  const subnet = subnetsFor(mode)[subIdx];
+
+  return runTransaction(db, async (tx) => {
+    const hostSnap = await tx.get(hostRef);
+    if (!hostSnap.exists()) throw new Error('Aluno não encontrado.');
+    const host = hostSnap.data() as Host;
+    const hostname = hostnameFor(host.name, novoPc);
+
+    if (host.subnetIndex === subIdx && host.mask === subnet.mask && host.gateway === subnet.gateway) {
+      tx.update(hostRef, { pc: novoPc, hostname });
+      return { ...host, pc: novoPc, hostname };
+    }
+
+    const poolSnap = await tx.get(poolRef);
+    const pool: IpPoolDoc = poolSnap.exists() ? (poolSnap.data() as IpPoolDoc) : { next: {} };
+    const offset = pool.next[subIdx] ?? FIRST_HOST_OFFSET;
+    const ip = ipForOffset(subnet, offset);
+    if (!ip) throw new Error('Sub-rede cheia: não há mais IPs livres.');
+    tx.set(poolRef, { next: { ...pool.next, [subIdx]: offset + 1 } });
+    const novo = { pc: novoPc, hostname, subnetIndex: subIdx, ip, mask: subnet.mask, gateway: subnet.gateway };
+    tx.update(hostRef, novo);
+    return { ...host, ...novo };
+  });
+}
+
+/** O aluno atualiza o IP do próprio site depois de ser movido de sub-rede. */
+export async function updateSiteIp(sid: string, name: string, ip: string): Promise<void> {
+  await updateDoc(doc(sitesCol(sid), name), { ip });
+}
+
 export function watchHosts(sid: string, cb: (hosts: Host[]) => void): Unsubscribe {
   return onSnapshot(hostsCol(sid), (snap) => {
     cb(snap.docs.map((d) => d.data() as Host));
