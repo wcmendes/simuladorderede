@@ -73,6 +73,26 @@ export async function getSession(sid: string): Promise<SessionDoc | null> {
   return snap.exists() ? (snap.data() as SessionDoc) : null;
 }
 
+/** Código da sessão padrão: o professor entra e ela já existe; o aluno já vê o código preenchido. */
+export const CODIGO_PADRAO = 'AULA';
+
+/**
+ * Abre a sessão padrão: cria se não existe, reaproveita se é deste navegador (mesmo uid).
+ * Devolve null se ela pertence a outro navegador (só o dono pode alterá-la).
+ */
+export async function abrirSessaoPadrao(uid: string, mode: NetMode = '/25'): Promise<string | null> {
+  const sid = sessionIdFromCode(CODIGO_PADRAO);
+  const s = await getSession(sid);
+  if (!s) return createSession(CODIGO_PADRAO, mode, uid);
+  return s.ownerUid === uid ? sid : null;
+}
+
+/** Nº do computador quando o aluno não informa: segue a ordem de chegada (1 a 40, volta ao 1 depois do 40). */
+export async function proximoPc(sid: string): Promise<number> {
+  const snap = await getDocs(hostsCol(sid));
+  return (snap.size % 40) + 1;
+}
+
 export async function createSession(code: string, mode: NetMode, ownerUid: string): Promise<string> {
   const sid = sessionIdFromCode(code);
   await setDoc(sessionRef(sid), {

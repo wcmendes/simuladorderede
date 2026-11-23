@@ -1,6 +1,6 @@
 // Tela de entrada do aluno: código da sessão, nome e nº do computador.
 import { useState } from 'react';
-import { getSession, joinSession, sessionIdFromCode } from '../firebase/data';
+import { CODIGO_PADRAO, getSession, joinSession, proximoPc, sessionIdFromCode } from '../firebase/data';
 import type { Host } from '../sim/types';
 import { Footer } from './Footer';
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function JoinScreen({ uid, initialCode, onJoined }: Props) {
-  const [code, setCode] = useState(initialCode ?? '');
+  const [code, setCode] = useState(initialCode ?? CODIGO_PADRAO);
   const [name, setName] = useState('');
   const [pc, setPc] = useState('');
   const [error, setError] = useState('');
@@ -20,10 +20,11 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    const pcInformado = pc.trim() !== '';
     const pcNum = Number(pc);
     if (!code.trim()) return setError('Informe o código da sessão.');
     if (name.trim().split(/\s+/).length < 2) return setError('Digite nome e sobrenome.');
-    if (!Number.isInteger(pcNum) || pcNum < 1 || pcNum > 40) return setError('O número do computador deve ser de 1 a 40.');
+    if (pcInformado && (!Number.isInteger(pcNum) || pcNum < 1 || pcNum > 40)) return setError('O número do computador deve ser de 1 a 40, ou deixe em branco.');
 
     setLoading(true);
     try {
@@ -34,7 +35,7 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
         setLoading(false);
         return;
       }
-      const host = await joinSession(sid, uid, name.trim(), pcNum, session.mode);
+      const host = await joinSession(sid, uid, name.trim(), pcInformado ? pcNum : await proximoPc(sid), session.mode);
       onJoined(sid, host);
     } catch (err) {
       setError('Erro ao entrar: ' + (err instanceof Error ? err.message : String(err)));
@@ -57,8 +58,8 @@ export function JoinScreen({ uid, initialCode, onJoined }: Props) {
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" />
         </div>
         <div className="field">
-          <label htmlFor="pc">Número do computador (1 a 40)</label>
-          <input id="pc" type="number" min={1} max={40} value={pc} onChange={(e) => setPc(e.target.value)} placeholder="Ex.: 12" />
+          <label htmlFor="pc">Número do computador (1 a 40, opcional)</label>
+          <input id="pc" type="number" min={1} max={40} value={pc} onChange={(e) => setPc(e.target.value)} placeholder="Deixe em branco se não souber" />
         </div>
         {error && <div className="error-msg">{error}</div>}
         <button className="btn" type="submit" disabled={loading} style={{ width: '100%', marginTop: 8 }}>

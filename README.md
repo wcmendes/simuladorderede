@@ -32,6 +32,8 @@ Acompanha a Prática 1 (diagnóstico de rede no Windows, endereçamento IP e cri
 
 ## 🕹️ Como funciona
 
+**Sessão padrão:** ao entrar em `/professor`, o painel abre sozinho a sessão com código **AULA** (cria se não existir). O aluno já vê `AULA` preenchido. Só o navegador que a criou a controla; em outro aparelho, crie uma sessão com outro código. O número do computador do aluno é opcional: em branco, segue a ordem de chegada.
+
 1. O **professor** acessa o painel, escolhe o modo de rede (/24, /25 ou /26) e cria a sessão. Recebe um **código** (ex.: `REDES0411`) e um **QR Code em tela cheia** para projetar.
 2. O **aluno** entra com código + nome + número do computador. Recebe automaticamente IP, máscara, gateway, DNS, MAC e hostname (`PC-joao-12`), alocados sem repetir por transação do Firestore.
 3. Os alunos usam o **terminal**: pingam colegas (que recebem uma notificação na tela), publicam sites (`site criar padaria`) e os descobrem com `nslookup` e `tracert`.

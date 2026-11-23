@@ -1,6 +1,8 @@
 // Painel do professor: criar sessão, QR, lista de alunos, falhas, feed, moderação.
 import { useEffect, useMemo, useState } from 'react';
 import {
+  abrirSessaoPadrao,
+  CODIGO_PADRAO,
   createSession,
   endSession,
   removeHost,
@@ -24,6 +26,8 @@ export function ProfessorApp({ uid }: { uid: string }) {
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState('');
   const [sid, setSid] = useState<string | null>(() => localStorage.getItem('labredes-prof-sid'));
+  const [auto, setAuto] = useState(true); // abre a sessão padrão sozinho, uma vez
+  const [aviso, setAviso] = useState('');
 
   if (!authed) {
     return (
@@ -41,9 +45,21 @@ export function ProfessorApp({ uid }: { uid: string }) {
     );
   }
 
-  if (!sid) return <CreateSession uid={uid} onCreated={(s) => { localStorage.setItem('labredes-prof-sid', s); setSid(s); }} />;
+  const guardar = (s: string) => { localStorage.setItem('labredes-prof-sid', s); setSid(s); };
 
-  return <Dashboard sid={sid} onEnded={() => { localStorage.removeItem('labredes-prof-sid'); setSid(null); }} />;
+  if (!sid && auto) {
+    return (
+      <SessaoPadrao
+        uid={uid}
+        onReady={guardar}
+        onFalha={(msg) => { setAviso(msg); setAuto(false); }}
+      />
+    );
+  }
+
+  if (!sid) return <CreateSession uid={uid} aviso={aviso} onCreated={guardar} />;
+
+  return <Dashboard sid={sid} onEnded={() => { localStorage.removeItem('labredes-prof-sid'); setAuto(false); setAviso(''); setSid(null); }} />;
 }
 
 function genCode(): string {
@@ -54,7 +70,24 @@ function genCode(): string {
   return `${c}${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function CreateSession({ uid, onCreated }: { uid: string; onCreated: (sid: string) => void }) {
+/** Entra direto na sessão padrão (código AULA), sem passar pelo formulário. */
+function SessaoPadrao({ uid, onReady, onFalha }: { uid: string; onReady: (sid: string) => void; onFalha: (msg: string) => void }) {
+  useEffect(() => {
+    let vivo = true;
+    abrirSessaoPadrao(uid)
+      .then((sid) => {
+        if (!vivo) return;
+        if (sid) onReady(sid);
+        else onFalha(`A sessão ${CODIGO_PADRAO} foi criada em outro navegador e só ele pode controlá-la. Crie uma sessão com outro código.`);
+      })
+      .catch((e) => vivo && onFalha('Não consegui abrir a sessão padrão: ' + (e instanceof Error ? e.message : String(e))));
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
+  return <div className="center-screen"><div className="card"><h1>Painel do Professor</h1><p className="sub">Abrindo a sessão padrão...</p></div></div>;
+}
+
+function CreateSession({ uid, aviso, onCreated }: { uid: string; aviso?: string; onCreated: (sid: string) => void }) {
   const [code, setCode] = useState(genCode);
   const [mode, setMode] = useState<NetMode>('/25');
   const [busy, setBusy] = useState(false);
@@ -75,6 +108,7 @@ function CreateSession({ uid, onCreated }: { uid: string; onCreated: (sid: strin
       <div className="card">
         <h1>Nova sessão</h1>
         <p className="sub">Defina o código e o modo de rede</p>
+        {aviso && <div className="error-msg" style={{ marginBottom: 10 }}>{aviso}</div>}
         <div className="field">
           <label>Código da sessão</label>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
