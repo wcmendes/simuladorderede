@@ -280,3 +280,10 @@ table.students th { color: var(--muted); }
 .diag-resp button.sel { border-color: #ffd34e; background: #3b3416; }
 .diag-resp .btn { padding: 6px 14px; }
 .diag-ok { color: #5be584; margin-top: 6px; } .diag-err { color: #ff7b72; margin-top: 6px; }
+
+/* Avatar do professor: marca d'água discreta (tela inicial usa a versão grande) */
+.avatar-marca { position: fixed; right: 14px; bottom: 56px; height: min(26vh, 220px); width: auto; opacity: 0.12; pointer-events: none; z-index: 5; }
+@media (max-width: 700px) { .avatar-marca { display: none; } }
+.home-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.home-avatar { height: clamp(200px, 34vw, 340px); width: auto; flex: none; margin-top: -12px; }
+@media (max-width: 600px) { .home-avatar { height: 130px; } }

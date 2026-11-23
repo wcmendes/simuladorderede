@@ -25,10 +25,15 @@ export function Home() {
   return (
     <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <main style={{ flex: 1, maxWidth: 1000, width: '100%', margin: '0 auto', padding: '32px 20px' }}>
-        <h1 style={{ margin: '0 0 6px', fontSize: 34 }}>LabRedes</h1>
-        <p style={{ color: 'var(--muted)', margin: '0 0 24px', maxWidth: 70 + 'ch' }}>
-          Laboratório de Redes de Computadores no navegador. Escolha abaixo o que fazer. Funciona no computador e no celular, sem cadastro.
-        </p>
+        <div className="home-topo">
+          <div>
+            <h1 style={{ margin: '0 0 6px', fontSize: 34 }}>LabRedes</h1>
+            <p style={{ color: 'var(--muted)', margin: 0, maxWidth: 70 + 'ch' }}>
+              Laboratório de Redes de Computadores no navegador. Escolha abaixo o que fazer. Funciona no computador e no celular, sem cadastro.
+            </p>
+          </div>
+          <img className="home-avatar" src="/will.webp" alt="Professor segurando um cabo de fibra óptica ligado a uma nuvem" />
+        </div>
 
         <div style={grade}>
           <Cartao titulo="1. Entrar na rede da turma">

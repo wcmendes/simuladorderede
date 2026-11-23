@@ -11,6 +11,7 @@ import { HelpPage } from './ui/HelpPage';
 import { Footer } from './ui/Footer';
 import { Mascara } from './ui/mascara/Mascara';
 import { Home } from './ui/Home';
+import { Marca } from './ui/Marca';
 import { AulaPublica } from './ui/aula/AulaPublica';
 
 /** Rota atual: aceita "#/professor" (hash) e "/professor" (caminho). */
@@ -125,8 +126,18 @@ function App() {
   );
 }
 
+function Root() {
+  const route = useRoute();
+  return (
+    <>
+      <App />
+      <Marca route={route} />
+    </>
+  );
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <Root />
   </StrictMode>,
 );
